@@ -2,6 +2,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
+
 # In this work, we define 0 as cooperation and 1 as defection
 def play_game(a_x, a_y, r, s, t, p):
     if a_x == 0 and a_y == 0:
@@ -50,7 +51,8 @@ def reactive_learning(s_p, s_q, r, s, t, p):
 
 
 if __name__ == '__main__':
-    s_p_r = [0.50, 11 / 13, 1 / 2, 7 / 26, 0]
+    # s_p_r = [0.50, 11 / 13, 1 / 2, 7 / 26, 0]
+    s_p_r = [0.50, 0.5, 0.5, 0.5, 0.5]
     # s_p_r = [0.50, 0.99, 0.40, 0.01, 0.01]
     # s_q_r = [0.25, 0.25, 0.25, 0.25, 0.25]
     r_r = 3
