@@ -3,6 +3,8 @@ import random
 import itertools
 import matplotlib.pyplot as plt
 import math
+import datetime
+import pandas as pd
 
 
 class Agent:
@@ -102,27 +104,46 @@ def evolution_one_step(popu, beta, r, s, t, p):
     return popu
 
 
-
-
 def run(popu_s, k, beta, r, s, t, p, r_time):
     popu = init(popu_s, k)
     for _ in range(r_time):
         popu = evolution_one_step(popu, beta, r, s, t, p)
-    return popu
-
-
-if __name__ == '__main__':
-    popu_s = 20; k = 10
-    beta = 0.01
-    r = 3; s = 1; t = 4; p = 2;
-    init_time = 100
-    fixation_probability = 0
-    for _ in range(init_time):
-        popu = run(popu_s, k, beta, r, s, t, p, 1000)
         coop_num = 0
         for i in range(popu_s):
             coop_num += popu[i].get_action()
-        coop_ratio = coop_num / popu_s
-        fixation_probability += coop_ratio
-    print(fixation_probability / init_time)
+        if coop_num == popu_s or coop_num == 0:
+            break
+    return popu
+
+
+def get_fixation_probability(popu_s, k, beta, r, s, t, p, r_time, init_time):
+    f_p = 0
+    for i in range(init_time):
+        popu = run(popu_s, k, beta, r, s, t, p, r_time)
+        coop_num = 0
+        for _ in range(popu_s):
+            coop_num += popu[_].get_action()
+        coop_frac = coop_num / popu_s
+        f_p = i / (i + 1) * f_p + 1 / (i + 1) * coop_frac
+    return f_p
+
+
+if __name__ == '__main__':
+    popu_s = 20
+    beta = 0.1
+    r = 3; s = 1; t = 4; p = 2
+    init_time = 2000
+    run_time = 10000
+    start_time = datetime.datetime.now()
+    result = []
+    for k in range(21):
+        print(k)
+        f_p = get_fixation_probability(popu_s, k, beta, r, s, t, p, run_time, init_time)
+        result.append(f_p)
+    end_time = datetime.datetime.now()
+    print(end_time - start_time)
+    result = pd.DataFrame({'phi_k': result})
+    file_name = './result/%.3f_simulation_result.csv' % beta
+    result.to_csv(file_name)
+    print(result)
 
