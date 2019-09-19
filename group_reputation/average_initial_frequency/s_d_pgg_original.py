@@ -1,12 +1,8 @@
-import numpy as np
 import pandas as pd
 import random
 import math
-import argparse
-import os
-import datetime
 
-from game import *
+from average_initial_frequency.game import *
 
 class SocialStructure():
     def __init__(self, g_s, g_b, g_l, t_n):
@@ -35,30 +31,22 @@ def build_structure(g_s, g_b, g_l):
     return ind_pos, pos_ind
 
 
-def initialize_action(t_n):
+def initial_action(t_n):
     init_a = np.random.choice([0, 1], t_n, p = [0.5, 0.5])
     return init_a
 
 
-def initialize_gamma(pos_n, init_gamma_value):
-    init_gamma = [init_gamma_value for _ in range(pos_n)]
-    return init_gamma
-
-
-def game_one_round(a_l, gamma_l, ind_pos, pos_ind, gamma_1, gamma_2):
+def game_one_round(a_l, gamma, ind_pos, pos_ind):
     ind_n = len(ind_pos)
     pos_n = len(pos_ind)
     a_l_old = a_l[:]
     p_l = [0 for _ in range(ind_n)]
-    g_a_frac = [0 for _ in range(pos_n)]
     for pos in range(pos_n):
-        gamma = gamma_l[pos]
         g_inds = pos_ind[pos]
         g_inds_n = len(g_inds)
         g_a = []
         for i in range(g_inds_n):
             g_a.append(a_l[g_inds[i]])
-        g_a_frac[pos] = np.mean(g_a)
         g_p = pgg_game(g_a, gamma)
         for i in range(g_inds_n):
             p_l[g_inds[i]] += g_p[i]
@@ -78,43 +66,39 @@ def game_one_round(a_l, gamma_l, ind_pos, pos_ind, gamma_1, gamma_2):
             t2 = random.random()
             if t2 < t1:
                 a_l[ind] = a_l_old[oppon]
+    return a_l
 
-    # Update gamma_l
-    for pos in range(pos_n):
-        if g_a_frac[pos] > 0.3:
-            gamma_l[pos] = gamma_1
-        else:
-            gamma_l[pos] = gamma_2
-
-    return a_l, gamma_l
-
-def run_game(run_time, gamma_1, gamma_2, ind_pos, pos_ind):
+def run_game(run_time, gamma, ind_pos, pos_ind):
     ind_n = len(ind_pos)
-    pos_n = len(pos_ind)
-    a_l = initialize_action(ind_n)
-    gamma_l = initialize_gamma(pos_n, gamma_1)
+    a_l = initial_action(ind_n)
     for step in range(run_time):
-        a_l, gamma_l = game_one_round(a_l, gamma_l, ind_pos, pos_ind, gamma_1, gamma_2)
-    return a_l, gamma_l
+        a_l = game_one_round(a_l, gamma, ind_pos, pos_ind)
+    return a_l
 
-
-def evaluation(eval_time, gamma_1, gamma_2, ind_pos, pos_ind, a_l, gamma_l):
+def evaluation(eval_time, gamma, ind_pos, pos_ind, a_l):
     ind_n = len(ind_pos)
     a_frac = 0
     for step in range(eval_time):
-        a_l, gamma_l = game_one_round(a_l, gamma_l, ind_pos, pos_ind, gamma_1, gamma_2)
+        a_l = game_one_round(a_l, gamma, ind_pos, pos_ind)
         a_frac = step / (step + 1) * a_frac + 1 / (step + 1) * np.mean(a_l)
     return a_frac
 
 
 if __name__ == '__main__':
-    group_size = 4; group_base = 2; group_length = 4
+    group_size = 16; group_base = 2; group_length = 5
     ind_pos, pos_ind = build_structure(group_size, group_base, group_length)
-    run_time = 1000; gamma_1 = 0.8; gamma_2 = 0.7; eval_time = 10
+    run_time = 1000; eval_time = 200
     init_time = 10
     r_a_frac = 0
-    for i in range(init_time):
-        a_l, gamma_l = run_game(run_time, gamma_1, gamma_2, ind_pos, pos_ind)
-        a_frac = evaluation(eval_time, gamma_1, gamma_2, ind_pos, pos_ind, a_l, gamma_l)
-        r_a_frac = i / (i + 1) * r_a_frac + 1 / (i + 1) * a_frac
-    print(r_a_frac)
+    result = {}
+    for gamma in np.arange(0.1, 1.3, 0.1):
+        gamma = round(gamma, 2)
+        print(gamma)
+        for i in range(init_time):
+            a_l = run_game(run_time, gamma, ind_pos, pos_ind)
+            a_frac = evaluation(eval_time, gamma, ind_pos, pos_ind, a_l)
+            r_a_frac = i / (i + 1) * r_a_frac + 1 / (i + 1) * a_frac
+        result[gamma] = [r_a_frac]
+    result = pd.DataFrame(result).T
+    result.to_csv('./results/s_d_pgg_original.csv')
+    print(result)

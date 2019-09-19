@@ -143,7 +143,7 @@ if __name__ == '__main__':
     end_time = datetime.datetime.now()
     print(end_time - start_time)
     result = pd.DataFrame({'phi_k': result})
-    file_name = './result/%.3f_simulation_result.csv' % beta
+    file_name = './results/%.3f_simulation_result.csv' % beta
     result.to_csv(file_name)
     print(result)
 
