@@ -71,7 +71,7 @@ if __name__ == '__main__':
     ind_pos_r, pos_ind_r = build_structure(group_size_r, group_base_r, group_length_r)
     pos_ind_multi_r = build_multi_pos_ind(multi_dimen_r, pos_ind_r, group_length_r, group_size_r, beta_r)
     ind_pos_multi_r = build_multi_ind_pos(pos_ind_multi_r, total_number_r)
-    run_time = 500; eval_time = 100
+    run_time = 1000; eval_time = 200
     init_time = 10
     result_a_frac = 0
     result = {}

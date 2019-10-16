@@ -42,6 +42,21 @@ def initialize_gamma(pos_n, init_gamma_value):
     return init_gamma
 
 
+def build_local_neigh(g_b, g_l, distance):
+    pos_num = (g_b ** (g_l - 1))
+    all_pos = np.arange(pos_num)
+    poten_pos = []
+    if distance == 1:
+        for i in range(pos_num):
+            poten_pos.append([i])
+    else:
+        poten_num = 2 ** (distance - 1) ## group_length > distance >= 2
+        poten_pos_num = 2 ** (g_l - distance)
+        for k in range(0, poten_pos_num):
+            poten_pos.append(all_pos[k * poten_num: (k + 1) * poten_num])
+    return poten_pos
+
+
 def game_one_round(stra_l, gamma_l, ind_pos, pos_ind, ave_gamma):
     ind_n = len(ind_pos)
     pos_n = len(pos_ind)
@@ -93,11 +108,16 @@ def game_one_round(stra_l, gamma_l, ind_pos, pos_ind, ave_gamma):
             if t2 < t1:
                 stra_l[ind] = stra_l_old[oppon]
 
-    # update gamma_l
-    total_a_frac = np.sum(g_a_frac)
-    for pos in range(pos_n):
-        gamma_l[pos] = ave_gamma * pos_n * (g_a_frac[pos] + 0.001) / (total_a_frac + 0.001 * pos_n)
 
+    gamma_group = build_local_neigh(g_b = 2, g_l =5, distance=5)
+    # Update gamma_l
+    for _ in range(len(gamma_group)):
+        total_a_frac = 0
+        neigh_length = len(gamma_group[_])
+        for pos in gamma_group[_]:
+            total_a_frac += g_a_frac[pos]
+        for pos in gamma_group[_]:
+            gamma_l[pos] = ave_gamma * neigh_length * (g_a_frac[pos] + 0.001) / (total_a_frac + 0.001 * neigh_length)
     return stra_l, gamma_l
 
 
@@ -128,7 +148,7 @@ if __name__ == '__main__':
     group_size_r = 16; group_base_r = 2; group_length_r = 5
     ind_pos_r, pos_ind_r = build_structure(group_size_r, group_base_r, group_length_r)
     run_time = 1000; eval_time = 200
-    init_time = 50
+    init_time = 10
     result_stra_frac = np.array([0, 0, 0])
     result = {}
     for gamma_r in np.arange(0.1, 1.3, 0.1):
@@ -140,5 +160,5 @@ if __name__ == '__main__':
             result_stra_frac = i / (i + 1) * result_stra_frac + 1 / (i + 1) * stra_frac_r
         result[ave_gamma_r] = result_stra_frac
     result = pd.DataFrame(result).T
-    result.to_csv('./results/s_d_pgg_competitive_gamma_punishment_10.csv')
+    result.to_csv('./results/s_d_pgg_competitive_local_gamma_punishment_10.csv')
     print(result)

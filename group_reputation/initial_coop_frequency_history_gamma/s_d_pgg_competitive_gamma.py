@@ -1,3 +1,4 @@
+import pandas as pd
 import random
 import math
 
@@ -40,7 +41,7 @@ def initialize_gamma(pos_n, init_gamma_value):
     return init_gamma
 
 
-def game_one_round(a_l, gamma_l, ind_pos, pos_ind, gamma_1, gamma_2):
+def game_one_round(a_l, gamma_l, ind_pos, pos_ind, ave_gamma):
     ind_n = len(ind_pos)
     pos_n = len(pos_ind)
     a_l_old = a_l[:]
@@ -75,41 +76,48 @@ def game_one_round(a_l, gamma_l, ind_pos, pos_ind, gamma_1, gamma_2):
                 a_l[ind] = a_l_old[oppon]
 
     # Update gamma_l
+    total_a_frac = np.sum(g_a_frac)
+    learning_rate = 0.3
     for pos in range(pos_n):
-        if g_a_frac[pos] > 0.3:
-            gamma_l[pos] = gamma_1
-        else:
-            gamma_l[pos] = gamma_2
-
+        gamma_l[pos] = learning_rate * ave_gamma * pos_n * (g_a_frac[pos] + 0.001) / (total_a_frac + 0.001 * pos_n) \
+                       + (1 - learning_rate) * gamma_l[pos]
     return a_l, gamma_l
 
-def run_game(run_time, gamma_1, gamma_2, ind_pos, pos_ind):
+
+def run_game(run_time, ave_gamma, ind_pos, pos_ind):
     ind_n = len(ind_pos)
     pos_n = len(pos_ind)
     a_l = initialize_action(ind_n)
-    gamma_l = initialize_gamma(pos_n, gamma_1)
+    gamma_l = initialize_gamma(pos_n, ave_gamma)
     for step in range(run_time):
-        a_l, gamma_l = game_one_round(a_l, gamma_l, ind_pos, pos_ind, gamma_1, gamma_2)
+        a_l, gamma_l = game_one_round(a_l, gamma_l, ind_pos, pos_ind, ave_gamma)
     return a_l, gamma_l
 
 
-def evaluation(eval_time, gamma_1, gamma_2, ind_pos, pos_ind, a_l, gamma_l):
+def evaluation(eval_time, ave_gamma, ind_pos, pos_ind, a_l, gamma_l):
     ind_n = len(ind_pos)
     a_frac = 0
     for step in range(eval_time):
-        a_l, gamma_l = game_one_round(a_l, gamma_l, ind_pos, pos_ind, gamma_1, gamma_2)
+        a_l, gamma_l = game_one_round(a_l, gamma_l, ind_pos, pos_ind, ave_gamma)
         a_frac = step / (step + 1) * a_frac + 1 / (step + 1) * np.mean(a_l)
     return a_frac
 
 
 if __name__ == '__main__':
-    group_size = 16; group_base = 2; group_length = 5
-    ind_pos, pos_ind = build_structure(group_size, group_base, group_length)
-    run_time = 1000; gamma_1 = 0.5; gamma_2 = 0.1; eval_time = 10
-    init_time = 10
-    r_a_frac = 0
-    for i in range(init_time):
-        a_l, gamma_l = run_game(run_time, gamma_1, gamma_2, ind_pos, pos_ind)
-        a_frac = evaluation(eval_time, gamma_1, gamma_2, ind_pos, pos_ind, a_l, gamma_l)
-        r_a_frac = i / (i + 1) * r_a_frac + 1 / (i + 1) * a_frac
-    print(r_a_frac)
+    group_size_r = 16; group_base_r = 2; group_length_r = 5
+    ind_pos_r, pos_ind_r = build_structure(group_size_r, group_base_r, group_length_r)
+    run_time = 1000; eval_time = 200
+    init_time = 50
+    result_a_frac = 0
+    result = {}
+    for gamma_r in np.arange(0.1, 1.3, 0.1):
+        ave_gamma_r = round(gamma_r, 2)
+        print(ave_gamma_r)
+        for i in range(init_time):
+            a_l_r, gamma_l_r = run_game(run_time, ave_gamma_r, ind_pos_r, pos_ind_r)
+            a_frac_r = evaluation(eval_time, ave_gamma_r, ind_pos_r, pos_ind_r, a_l_r, gamma_l_r)
+            result_a_frac = i / (i + 1) * result_a_frac + 1 / (i + 1) * a_frac_r
+        result[ave_gamma_r] = [result_a_frac]
+    result = pd.DataFrame(result).T
+    result.to_csv('./results/s_d_pgg_competitive_gamma.csv')
+    print(result)

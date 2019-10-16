@@ -95,8 +95,10 @@ def game_one_round(stra_l, gamma_l, ind_pos, pos_ind, ave_gamma):
 
     # update gamma_l
     total_a_frac = np.sum(g_a_frac)
+    learning_rate = 0.3
     for pos in range(pos_n):
-        gamma_l[pos] = ave_gamma * pos_n * (g_a_frac[pos] + 0.001) / (total_a_frac + 0.001 * pos_n)
+        gamma_l[pos] = learning_rate * ave_gamma * pos_n * (g_a_frac[pos] + 0.001) / (total_a_frac + 0.001 * pos_n) \
+                       + (1 - learning_rate) * gamma_l[pos]
 
     return stra_l, gamma_l
 

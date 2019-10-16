@@ -32,8 +32,10 @@ def build_structure(g_s, g_b, g_l):
 
 
 def initialize_strategy(t_n):
+    init_stra = []
     # 0 for defect, 1 for cooperate, 2 for cooperate and punish
-    init_stra = np.random.choice([0, 1, 2], t_n, p = [1./2., 1./4., 1./4.])
+    for i in range(int(t_n / 8)):
+        init_stra.extend([0, 0, 0, 0, 1, 1, 2, 2])
     return init_stra
 
 
@@ -125,10 +127,10 @@ def evaluation(eval_time, ave_gamma, ind_pos, pos_ind, stra_l, gamma_l):
 
 
 if __name__ == '__main__':
-    group_size_r = 16; group_base_r = 2; group_length_r = 5
+    group_size_r = 8; group_base_r = 2; group_length_r = 5
     ind_pos_r, pos_ind_r = build_structure(group_size_r, group_base_r, group_length_r)
     run_time = 1000; eval_time = 200
-    init_time = 50
+    init_time = 20
     result_stra_frac = np.array([0, 0, 0])
     result = {}
     for gamma_r in np.arange(0.1, 1.3, 0.1):

@@ -74,7 +74,8 @@ def game_one_round(stra_l, gamma_l, ind_pos, pos_ind, ave_gamma):
                     p_l[g_inds[i]] -= 1.0
                 if stra_l[g_inds[i]] == 0:
                     p_l[g_inds[i]] -= 1.0 * stra_count[2] / stra_count[0]
-    for ind in range(ind_n):
+    for _ in range(pos_n):
+        ind = random.choice(pos_ind[_])
         w1 = 0.01
         w2 = random.random()
         if w1 > w2:  # mutation

@@ -38,11 +38,12 @@ def game_one_round(multi_dimen, stra_l, gamma, ind_pos_multi, pos_ind_multi):
             g_p = pgg_game(g_a, gamma)
             for i in range(g_inds_n):
                 p_l[g_inds[i]] += g_p[i]
-            for i in range(g_inds_n):
-                if stra_l[g_inds[i]] == 2:
-                    p_l[g_inds[i]] -= 1.0 * stra_count[0]
-                if stra_l[g_inds[i]] == 0:
-                    p_l[g_inds[i]] -= 1.0 * stra_count[2]
+            if stra_count[0] > 0:
+                for i in range(g_inds_n):
+                    if stra_l[g_inds[i]] == 2:
+                        p_l[g_inds[i]] -= 1.0
+                    if stra_l[g_inds[i]] == 0:
+                        p_l[g_inds[i]] -= 1.0 * stra_count[2] / stra_count[0]
         p_all_l = d / (d + 1) * p_all_l + 1 / (d + 1) * p_l
 
     for ind in range(ind_n):
@@ -93,7 +94,7 @@ if __name__ == '__main__':
     ind_pos_r, pos_ind_r = build_structure(group_size_r, group_base_r, group_length_r)
     pos_ind_multi_r = build_multi_pos_ind(multi_dimen_r, pos_ind_r, group_length_r, group_size_r, beta_r)
     ind_pos_multi_r = build_multi_ind_pos(pos_ind_multi_r, total_number_r)
-    run_time = 500; eval_time = 100
+    run_time = 1000; eval_time = 200
     init_time = 10
     result_stra_frac = 0
     result = {}
