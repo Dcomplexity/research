@@ -2,7 +2,7 @@ import pandas as pd
 import random
 import math
 
-from average_initial_frequency.game import *
+from game import *
 
 class SocialStructure():
     def __init__(self, g_s, g_b, g_l, t_n):
@@ -37,7 +37,7 @@ def initialize_strategy(t_n):
     return init_stra
 
 
-def game_one_round(stra_l, gamma, ind_pos, pos_ind):
+def game_one_round(stra_l, gamma, ind_pos, pos_ind, update_ind_num):
     ind_n = len(ind_pos)
     pos_n = len(pos_ind)
     stra_l_old = stra_l[:]
@@ -63,43 +63,44 @@ def game_one_round(stra_l, gamma, ind_pos, pos_ind):
         if stra_count[0] > 0:
             for i in range(g_inds_n):
                 if stra_l[g_inds[i]] == 2:
-                    p_l[g_inds[i]] -= 1.0
+                    p_l[g_inds[i]] -= 0.3
                 if stra_l[g_inds[i]] == 0:
-                    p_l[g_inds[i]] -= 1.0 * stra_count[2] / stra_count[0]
+                    p_l[g_inds[i]] -= 1.0 * stra_count[2] /stra_count[0]
     for _ in range(pos_n):
-        ind = random.choice(pos_ind[_])
-        w1 = 0.01
-        w2 = random.random()
-        if w1 > w2:  # mutation
-            p_stra = [0, 1, 2]
-            p_stra.remove(stra_l_old[ind])
-            stra_l[ind] = random.choice(p_stra)
-        else:
-            while True:
-                oppon = random.choice(range(ind_n))
-                if oppon != ind:
-                    break
-            ind_p = p_l[ind]
-            oppon_p = p_l[oppon]
-            t1 = 1 / (1 + math.e ** (10 * (ind_p - oppon_p)))
-            t2 = random.random()
-            if t2 < t1:
-                stra_l[ind] = stra_l_old[oppon]
+        update_ind = np.random.choice(pos_ind[_], update_ind_num, replace=False)
+        for ind in update_ind:
+            w1 = 0.01
+            w2 = random.random()
+            if w1 > w2:  # mutation
+                p_stra = [0, 1, 2]
+                p_stra.remove(stra_l_old[ind])
+                stra_l[ind] = random.choice(p_stra)
+            else:
+                while True:
+                    oppon = random.choice(range(ind_n))
+                    if oppon != ind:
+                        break
+                ind_p = p_l[ind]
+                oppon_p = p_l[oppon]
+                t1 = 1 / (1 + math.e ** (10 * (ind_p - oppon_p)))
+                t2 = random.random()
+                if t2 < t1:
+                    stra_l[ind] = stra_l_old[oppon]
     return stra_l
 
-def run_game(run_time, gamma, ind_pos, pos_ind):
+def run_game(run_time, gamma, ind_pos, pos_ind, update_ind_num):
     ind_n = len(ind_pos)
     stra_l = initialize_strategy(ind_n)
     for step in range(run_time):
-        stra_l = game_one_round(stra_l, gamma, ind_pos, pos_ind)
+        stra_l = game_one_round(stra_l, gamma, ind_pos, pos_ind, update_ind_num)
     return stra_l
 
-def evaluation(eval_time, gamma, ind_pos, pos_ind, stra_l):
+def evaluation(eval_time, gamma, ind_pos, pos_ind, stra_l, update_ind_num):
     ind_n = len(ind_pos)
     stra_frac = np.array([0, 0, 0])
     for step in range(eval_time):
         new_stra_frac = np.array([0, 0, 0])
-        stra_l = game_one_round(stra_l, gamma, ind_pos, pos_ind)
+        stra_l = game_one_round(stra_l, gamma, ind_pos, pos_ind, update_ind_num)
         for i in stra_l:
            new_stra_frac[i] += 1
         new_stra_frac = new_stra_frac / ind_n
@@ -111,18 +112,22 @@ def evaluation(eval_time, gamma, ind_pos, pos_ind, stra_l):
 if __name__ == '__main__':
     group_size_r = 16; group_base_r = 2; group_length_r = 5
     ind_pos_r, pos_ind_r = build_structure(group_size_r, group_base_r, group_length_r)
-    run_time = 1000; eval_time = 200
+    run_time = 2000; eval_time = 200
     init_time = 50
     result_stra_frac = np.array([0, 0, 0])
-    result = {}
-    for gamma_r in np.arange(0.1, 1.3, 0.1):
-        gamma_r = round(gamma_r, 2)
-        print(gamma_r)
-        for i in range(init_time):
-            stra_l_r = run_game(run_time, gamma_r, ind_pos_r, pos_ind_r)
-            stra_frac_r = evaluation(eval_time, gamma_r, ind_pos_r, pos_ind_r, stra_l_r)
-            result_stra_frac = i / (i + 1) * result_stra_frac + 1 / (i + 1) * stra_frac_r
-        result[gamma_r] = result_stra_frac
-    result = pd.DataFrame(result).T
-    result.to_csv('./results/s_d_pgg_original_punishment_10.csv')
-    print(result)
+    result = []
+    update_ind_num_l_r = np.arange(1, 17, 5)
+    gamma_l_r = np.round(np.arange(0.1, 1.3, 0.1), 2)
+
+    for update_ind_num_r in update_ind_num_l_r:
+        for gamma_r in gamma_l_r:
+            print(update_ind_num_r, gamma_r)
+            for i in range(init_time):
+                stra_l_r = run_game(run_time, gamma_r, ind_pos_r, pos_ind_r, update_ind_num_r)
+                stra_frac_r = evaluation(eval_time, gamma_r, ind_pos_r, pos_ind_r, stra_l_r, update_ind_num_r)
+                result_stra_frac = i / (i + 1) * result_stra_frac + 1 / (i + 1) * stra_frac_r
+            result.append(result_stra_frac)
+    m_index = pd.MultiIndex.from_product([update_ind_num_l_r, gamma_l_r], names=['u_i_n', 'gamma'])
+    result_pd = pd.DataFrame(result, index=m_index)
+    result_pd.to_csv('./results/variable_pgg_original_punishment_03.csv')
+    print(result_pd)

@@ -2,7 +2,7 @@ import pandas as pd
 import random
 import math
 
-from average_initial_frequency.game import *
+from game import *
 
 class SocialStructure():
     def __init__(self, g_s, g_b, g_l, t_n):
@@ -32,7 +32,9 @@ def build_structure(g_s, g_b, g_l):
 
 
 def initialize_action(t_n):
-    init_a = np.random.choice([0, 1], t_n, p = [0.5, 0.5])
+    init_a = np.zeros(t_n, dtype=int)
+    for i in range(t_n):
+        init_a[i] = np.random.choice([0, 1], p = [(i+1)/t_n, 1.0-(i+1)/t_n])
     return init_a
 
 
@@ -58,9 +60,7 @@ def game_one_round(a_l, gamma_l, ind_pos, pos_ind, ave_gamma):
         g_p = pgg_game(g_a, gamma)
         for i in range(g_inds_n):
             p_l[g_inds[i]] += g_p[i]
-    for _ in range(pos_n):
-        ind = random.choice(pos_ind[_])
-    # for ind in range(ind_n):
+    for ind in range(ind_n):
         w1 = 0.01
         w2 = random.random()
         if w1 > w2:  # mutation
