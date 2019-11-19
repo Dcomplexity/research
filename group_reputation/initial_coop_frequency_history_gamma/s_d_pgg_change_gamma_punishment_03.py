@@ -139,5 +139,5 @@ if __name__ == '__main__':
             result_stra_frac = i / (i + 1) * result_stra_frac + 1 / (i + 1) * stra_frac_r
         result[ave_gamma_r] = result_stra_frac
     result = pd.DataFrame(result).T
-    result.to_csv('./results/s_d_pgg_change_gamma_punishment_03.csv')
+    result.to_csv('./results_old/s_d_pgg_change_gamma_punishment_03.csv')
     print(result)

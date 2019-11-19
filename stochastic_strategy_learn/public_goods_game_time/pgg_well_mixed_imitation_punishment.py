@@ -121,7 +121,7 @@ def run(r, run_time):
 if __name__ == '__main__':
     simulation_name = "pgg_well_mixed_imitation_punishment"
     abs_path = os.path.abspath(os.path.join(os.getcwd(), './'))
-    dir_name = abs_path + '/results/' + simulation_name + '/'
+    dir_name = abs_path + '/results_old/' + simulation_name + '/'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
 

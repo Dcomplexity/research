@@ -103,8 +103,8 @@ if __name__ == '__main__':
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     result_act_pd = pd.DataFrame(result_act, index=m_index)
     result_payoff_pd = pd.DataFrame(result_payoff, index=m_index)
-    result_act_pd.to_csv('./results/ft_pgg_original_act.csv')
-    result_payoff_pd.to_csv('./results/ft_pgg_original_payoff.csv')
+    result_act_pd.to_csv('./results_old/ft_pgg_original_act.csv')
+    result_payoff_pd.to_csv('./results_old/ft_pgg_original_payoff.csv')
     print(result_act_pd)
     print(result_payoff_pd)
 

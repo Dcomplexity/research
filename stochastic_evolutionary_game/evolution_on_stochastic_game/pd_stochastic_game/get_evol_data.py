@@ -38,7 +38,7 @@ def get_evol_data():
     for i in range(n_it): # run the evolution process with n_it initializations
         print(i)
         (coop, freq) = evol_proc(qs, pi_round, beta, n_gen)
-        # get the average results of n_it initializations
+        # get the average results_old of n_it initializations
         coops = i / (i + 1) * coops + 1 / (i + 1) * coop
         freqs = i / (i + 1) * freqs + 1 / (i + 1) * freq
 

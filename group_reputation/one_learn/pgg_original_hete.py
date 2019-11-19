@@ -115,6 +115,6 @@ if __name__ == '__main__':
         gamma_frac_history.extend(history_sim_r)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    gamma_frac_history_pd.to_csv('./results/pgg_original_hete.csv')
+    gamma_frac_history_pd.to_csv('./results_old/pgg_original_hete.csv')
     print(gamma_frac_history_pd)
 

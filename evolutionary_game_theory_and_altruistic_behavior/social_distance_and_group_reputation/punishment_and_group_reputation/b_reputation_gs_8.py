@@ -140,7 +140,7 @@ if __name__ == "__main__":
     total_num_r = group_size_r * (group_base_r ** (group_length_r - 1))
     ind_pos_r, pos_ind_r = build_structure(group_size_r, group_base_r, group_length_r)
     abs_path = os.path.abspath(os.path.join(os.getcwd(), './'))
-    dir_name = abs_path + '/results/'
+    dir_name = abs_path + '/results_old/'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     file_name = dir_name + 'frac_co_b_reputation_gs_%s.csv' % group_size_r

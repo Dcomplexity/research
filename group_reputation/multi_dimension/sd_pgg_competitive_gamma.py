@@ -101,7 +101,7 @@ if __name__ == '__main__':
             result_a_frac = i / (i + 1) * result_a_frac + 1 / (i + 1) * a_frac_r
         result[ave_gamma_r] = [result_a_frac]
     result = pd.DataFrame(result).T
-    result_file_name = './results/sd_pgg_competitive_gamma_%d.csv' %(beta_r)
+    result_file_name = './results_old/sd_pgg_competitive_gamma_%d.csv' %(beta_r)
     result.to_csv(result_file_name)
     print(result)
 

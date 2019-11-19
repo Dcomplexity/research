@@ -116,7 +116,7 @@ def evaluation(popu, edges, b, sample_time):
 if __name__ == '__main__':
     simulation_name = "b_lattice_original"
     abs_path = os.path.abspath(os.path.join(os.getcwd(), './'))
-    dir_name = abs_path + '/results/'
+    dir_name = abs_path + '/results_old/'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
     result_file_name = dir_name + "results_%s.csv" % simulation_name

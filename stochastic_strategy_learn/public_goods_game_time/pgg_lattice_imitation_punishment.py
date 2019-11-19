@@ -120,7 +120,7 @@ if __name__ == "__main__":
     start_time = datetime.datetime.now()
     simulation_name = "pgg_lattice_imitation_punishment"
     abs_path = os.path.abspath(os.path.join(os.getcwd(), './'))
-    dir_name = abs_path + '/results/' + simulation_name + '/'
+    dir_name = abs_path + '/results_old/' + simulation_name + '/'
     if not os.path.isdir(dir_name):
         os.makedirs(dir_name)
 

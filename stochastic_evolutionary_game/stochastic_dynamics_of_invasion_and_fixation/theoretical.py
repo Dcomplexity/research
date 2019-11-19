@@ -29,6 +29,6 @@ if __name__ == '__main__':
         phi_k = calc_phi_k(popu_s, k, beta, r, s, t, p)
         result.append(phi_k)
     result = pd.DataFrame({'phi_k': result})
-    file_name = './results/%.3f_theoretical_result.csv' % beta
+    file_name = './results_old/%.3f_theoretical_result.csv' % beta
     result.to_csv(file_name)
     print(result)

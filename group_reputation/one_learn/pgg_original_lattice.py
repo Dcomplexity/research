@@ -119,8 +119,8 @@ def run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu, adj_
 
 
 if __name__ == '__main__':
-    adj, edge = generate_lattice(4, 4)
-    g_s = 5; g_b = 2; g_l = 5; w = 1.0; run_time = 500; init_time = 100
+    adj, edge = generate_lattice(8, 4)
+    g_s = 5; g_b = 2; g_l = 6; w = 1.0; run_time = 1000; init_time = 100
     g_n = g_b ** (g_l - 1); c = 1.0; mu = 0.01
     # gamma = 0.5; r = gamma * g_s
     ind_pos, pos_ind = build_structure(g_s, g_b, g_l)
@@ -134,6 +134,6 @@ if __name__ == '__main__':
         gamma_frac_history.extend(history_sim_r)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    gamma_frac_history_pd.to_csv('./results/pgg_original_lattice.csv')
+    gamma_frac_history_pd.to_csv('./results_old/pgg_original_lattice.csv')
     print(gamma_frac_history_pd)
 

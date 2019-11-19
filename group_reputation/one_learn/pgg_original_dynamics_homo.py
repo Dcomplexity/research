@@ -128,7 +128,7 @@ if __name__ == '__main__':
         gamma_frac_history.extend(group_c_frac_history)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    csv_file_name = './results/pgg_original_dynamics_%s.csv' % init_type
+    csv_file_name = './results_old/pgg_original_dynamics_%s.csv' % init_type
     gamma_frac_history_pd.to_csv(csv_file_name)
     print(gamma_frac_history_pd)
 

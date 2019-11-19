@@ -137,7 +137,7 @@ def dynamic_process(m, n, c, r, mu, run_t):
         w = calc_trans_matrix(m, n, c_dist, payoff, mu)
         group_c_frac_history.append(np.copy(calc_group_frac(m, n, c_dist)))
     group_c_frac_history_pd = pd.DataFrame(group_c_frac_history)
-    group_c_frac_history_pd.to_csv('./results/pgg_competitive_gamma.csv')
+    group_c_frac_history_pd.to_csv('./results_old/pgg_competitive_gamma.csv')
     return group_c_frac_history_pd
 
 

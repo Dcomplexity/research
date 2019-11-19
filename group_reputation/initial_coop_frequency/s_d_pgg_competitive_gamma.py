@@ -118,5 +118,5 @@ if __name__ == '__main__':
             result_a_frac = i / (i + 1) * result_a_frac + 1 / (i + 1) * a_frac_r
         result[ave_gamma_r] = [result_a_frac]
     result = pd.DataFrame(result).T
-    result.to_csv('./results/s_d_pgg_competitive_gamma.csv')
+    result.to_csv('./results_old/s_d_pgg_competitive_gamma.csv')
     print(result)

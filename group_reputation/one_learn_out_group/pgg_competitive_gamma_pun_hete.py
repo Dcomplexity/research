@@ -171,5 +171,5 @@ if __name__ == '__main__':
         new_gamma_frac_history.append(item.flatten())
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(new_gamma_frac_history, index=m_index)
-    gamma_frac_history_pd.to_csv('./results/pgg_competitive_gamma_pun_hete.csv')
+    gamma_frac_history_pd.to_csv('./results_old/pgg_competitive_gamma_pun_hete.csv')
     print(gamma_frac_history_pd)

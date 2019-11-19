@@ -119,10 +119,11 @@ def game_one_round(a_l, g_gamma_l, ind_pos, pos_ind, g_s, w, ave_gamma, mu, adj_
     return ind_a_l.reshape((pos_n, int(ind_n / pos_n))), g_gamma_l
 
 
-def run_game(f_0, init_time, run_time, ave_gamma, ind_pos, pos_ind, g_s, w, mu, adj_link, edge):
+def run_game(f_0, init_time, run_time, ave_gamma, ind_pos, pos_ind, g_s, w, mu):
     f_history = []
     pos_n = len(pos_ind)
     for round in range(init_time):
+        adj_link, edge = generate_ba(g_n, 2)
         a_l = initial_action(f_0, ind_pos, pos_ind)
         g_gamma_l = initial_gamma(pos_n, ave_gamma)
         for step in range(run_time):
@@ -141,7 +142,6 @@ def run_game(f_0, init_time, run_time, ave_gamma, ind_pos, pos_ind, g_s, w, mu, 
 if __name__ == '__main__':
     g_s = 8; g_b = 2; g_l = 6; w = 1.0; run_time = 1000; init_time = 100
     g_n = g_b ** (g_l - 1); c = 1.0; mu = 0.01
-    adj, edge = generate_ba(g_n, 2)
     ind_pos, pos_ind = build_structure(g_s, g_b, g_l)
     gamma_l = np.round(np.arange(0.1, 1.6, 0.1), 2)
     step_l = np.arange(run_time + 1)
@@ -150,9 +150,9 @@ if __name__ == '__main__':
         print(ave_gamma)
         # f_0 = np.random.random(g_n)
         f_0 = [0.5 for _ in range(g_n)]
-        history_sim_r = run_game(f_0, init_time, run_time, ave_gamma, ind_pos, pos_ind, g_s, w, mu, adj, edge)
+        history_sim_r = run_game(f_0, init_time, run_time, ave_gamma, ind_pos, pos_ind, g_s, w, mu)
         gamma_frac_history.extend(history_sim_r)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    gamma_frac_history_pd.to_csv('./results/pgg_competitive_gamma_ba.csv')
+    gamma_frac_history_pd.to_csv('./results_old/pgg_competitive_gamma_ba.csv')
     print(gamma_frac_history_pd)

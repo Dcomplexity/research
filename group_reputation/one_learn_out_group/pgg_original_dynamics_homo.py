@@ -40,48 +40,50 @@ def initialize_c_dist(m, n, init_type = 'homo'):
     return c_dist
 
 
-def t_plus(c_num, m, n, c_dist, payoff, mu):
+def t_plus(pos_i, c_num, m, n, c_dist, payoff, mu):
     t_plus_p = 0
-    for pos in range(m):
-        t_plus_p_j = 0
-        c_group_dist = c_dist[pos]
-        for c_j in range(n + 1):
-            t_plus_p_j += ((n - c_num) / n) * (c_j / n) * c_group_dist[c_j] * (1 / m) \
-                          * (1 / (1 + math.e ** (2.0 * (payoff[c_num][0] - payoff[c_j][1]))))
-        t_plus_p += t_plus_p_j
+    for pos_j in range(m):
+        if pos_i != pos_j:
+            t_plus_p_j = 0
+            c_group_dist = c_dist[pos_j]
+            for c_j in range(n + 1):
+                t_plus_p_j += ((n - c_num) / n) * (c_j / n) * c_group_dist[c_j] * (1 / (m - 1)) \
+                              * (1 / (1 + math.e ** (2.0 * (payoff[c_num][0] - payoff[c_j][1]))))
+            t_plus_p += t_plus_p_j
     t_plus_p = (1 - mu) * t_plus_p + mu * (n - c_num) / n
     return t_plus_p
 
 
-def t_minus(c_num, m, n, c_dist, payoff, mu):
+def t_minus(pos_i, c_num, m, n, c_dist, payoff, mu):
     t_minus_p = 0
-    for pos in range(m):
-        t_minus_p_j = 0
-        c_group_dist = c_dist[pos]
-        for c_j in range(n + 1):
-            t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / m) \
-                           * (1 / (1 + math.e ** (2.0 * (payoff[c_num][1] - payoff[c_j][0]))))
-        t_minus_p += t_minus_p_j
+    for pos_j in range(m):
+        if pos_i != pos_j:
+            t_minus_p_j = 0
+            c_group_dist = c_dist[pos_j]
+            for c_j in range(n + 1):
+                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / (m - 1)) \
+                               * (1 / (1 + math.e ** (2.0 * (payoff[c_num][1] - payoff[c_j][0]))))
+            t_minus_p += t_minus_p_j
     t_minus_p = (1 - mu) * t_minus_p + mu * c_num / n
     return t_minus_p
 
 
 def calc_trans_matrix(m, n, c_dist, payoff, mu):
     w = np.zeros((m, n + 1, n + 1))
-    for pos in range(m):
+    for pos_i in range(m):
         for c_i in range(n + 1):
-            t_plus_p = t_plus(c_i, m, n, c_dist, payoff, mu)
-            t_minus_p = t_minus(c_i, m, n, c_dist, payoff, mu)
+            t_plus_p = t_plus(pos_i, c_i, m, n, c_dist, payoff, mu)
+            t_minus_p = t_minus(pos_i, c_i, m, n, c_dist, payoff, mu)
             if c_i == 0:
-                w[pos, c_i, c_i] = 1 - t_plus_p
-                w[pos, c_i, c_i + 1] = t_plus_p
+                w[pos_i, c_i, c_i] = 1 - t_plus_p
+                w[pos_i, c_i, c_i + 1] = t_plus_p
             elif c_i == n:
-                w[pos, c_i, c_i - 1] = t_minus_p
-                w[pos, c_i, c_i] = 1 - t_minus_p
+                w[pos_i, c_i, c_i - 1] = t_minus_p
+                w[pos_i, c_i, c_i] = 1 - t_minus_p
             else:
-                w[pos, c_i, c_i - 1] = t_minus_p
-                w[pos, c_i, c_i] = 1 - t_minus_p - t_plus_p
-                w[pos, c_i, c_i + 1] = t_plus_p
+                w[pos_i, c_i, c_i - 1] = t_minus_p
+                w[pos_i, c_i, c_i] = 1 - t_minus_p - t_plus_p
+                w[pos_i, c_i, c_i + 1] = t_plus_p
     return w
 
 
@@ -128,7 +130,7 @@ if __name__ == '__main__':
         gamma_frac_history.extend(group_c_frac_history)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    csv_file_name = './results/pgg_original_dynamics_%s.csv' % init_type
+    csv_file_name = './results_old/pgg_original_dynamics_%s.csv' % init_type
     gamma_frac_history_pd.to_csv(csv_file_name)
     print(gamma_frac_history_pd)
 

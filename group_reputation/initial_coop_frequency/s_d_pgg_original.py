@@ -100,5 +100,5 @@ if __name__ == '__main__':
             result_a_frac = i / (i + 1) * result_a_frac + 1 / (i + 1) * a_frac_r
         result[gamma_r] = [result_a_frac]
     result = pd.DataFrame(result).T
-    result.to_csv('./results/s_d_pgg_original.csv')
+    result.to_csv('./results_old/s_d_pgg_original.csv')
     print(result)

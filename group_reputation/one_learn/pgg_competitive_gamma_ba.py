@@ -139,7 +139,7 @@ def run_game(f_0, init_time, run_time, ave_gamma, ind_pos, pos_ind, g_s, w, mu, 
 
 
 if __name__ == '__main__':
-    g_s = 5; g_b = 2; g_l = 5; w = 1.0; run_time = 500; init_time = 100
+    g_s = 5; g_b = 2; g_l = 6; w = 1.0; run_time = 1000; init_time = 100
     g_n = g_b ** (g_l - 1); c = 1.0; mu = 0.01
     adj, edge = generate_ba(g_n, 2)
     ind_pos, pos_ind = build_structure(g_s, g_b, g_l)
@@ -154,5 +154,5 @@ if __name__ == '__main__':
         gamma_frac_history.extend(history_sim_r)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    gamma_frac_history_pd.to_csv('./results/pgg_competitive_gamma_ba.csv')
+    gamma_frac_history_pd.to_csv('./results_old/pgg_competitive_gamma_ba.csv')
     print(gamma_frac_history_pd)

@@ -110,7 +110,7 @@ if __name__ == '__main__':
             result_stra_frac = i / (i + 1) * result_stra_frac + 1 / (i + 1) * stra_frac_r
         result[gamma_r] = result_stra_frac
     result = pd.DataFrame(result).T
-    result_file_name = './results/hete_pgg_original_punishment_10.csv'
+    result_file_name = './results_old/hete_pgg_original_punishment_10.csv'
     result.to_csv(result_file_name)
     print(result)
 

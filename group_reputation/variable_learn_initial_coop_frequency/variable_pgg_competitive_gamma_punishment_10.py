@@ -146,5 +146,5 @@ if __name__ == '__main__':
             result.append(result_stra_frac)
     m_index = pd.MultiIndex.from_product([update_ind_num_l_r, ave_gamma_l_r], names=['u_i_n', 'gamma'])
     result_pd = pd.DataFrame(result, index=m_index)
-    result_pd.to_csv('./results/variable_pgg_competitive_gamma_punishment_10.csv')
+    result_pd.to_csv('./results_old/variable_pgg_competitive_gamma_punishment_10.csv')
     print(result_pd)

@@ -84,6 +84,6 @@ if __name__ == '__main__':
             result_a_frac = i / (i + 1) * result_a_frac + 1 / (i + 1) * a_frac_r
         result[gamma_r] = [result_a_frac]
     result = pd.DataFrame(result).T
-    result_file_name = './results/hete_pgg_original.csv'
+    result_file_name = './results_old/hete_pgg_original.csv'
     result.to_csv(result_file_name)
     print(result)

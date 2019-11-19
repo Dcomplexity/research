@@ -134,5 +134,5 @@ if __name__ == '__main__':
     step_l = np.arange(run_time + 1)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     result = pd.DataFrame(result, index=m_index)
-    result.to_csv('./results/ft_pgg_original_punishment_03.csv')
+    result.to_csv('./results_old/ft_pgg_original_punishment_03.csv')
     print(result)

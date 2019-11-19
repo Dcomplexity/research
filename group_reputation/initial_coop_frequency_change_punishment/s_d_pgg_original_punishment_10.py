@@ -127,5 +127,5 @@ if __name__ == '__main__':
             result.append(result_stra_frac)
     m_index = pd.MultiIndex.from_product([pun_list_r, gamma_list_r], names=['pun', 'gamma'])
     result_pd = pd.DataFrame(result, index=m_index)
-    result_pd.to_csv('./results/s_d_pgg_original_punishment_10.csv')
+    result_pd.to_csv('./results_old/s_d_pgg_original_punishment_10.csv')
     print(result_pd)
