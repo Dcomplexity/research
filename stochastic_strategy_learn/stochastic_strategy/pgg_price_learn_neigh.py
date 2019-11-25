@@ -145,7 +145,7 @@ def evolution_one_step(popu, gamma):
             oppon = popu[j]
             a_j = a_l[j]
             p_j = oppon.get_payoffs()
-            s_g_i += s_i * (1 - s_i) * (a_i - a_j) * (0.5 - (1 / (1 + math.e ** (2 * (p_i - p_j))))) / total_num
+            s_g_i += s_i * (1 - s_i) * (a_i - a_j) * (0.5 - (1 / (1 + math.e ** (2 * (p_i - p_j))))) / neigh_i_num
         s_i = s_i + s_g_i
         ind.set_strategy(s_i)
     return popu
