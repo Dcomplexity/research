@@ -1,5 +1,48 @@
 import numpy as np
+import networkx as nx
 from itertools import permutations
+
+
+def pdd_game(a_x, a_y, r, s, t, p):
+    if a_x == 1 and a_y == 1:
+        p_x = r; p_y = r
+    elif a_x == 1 and a_y == 0:
+        p_x = s; p_y = t
+    elif a_x == 0 and a_y == 1:
+        p_x = t; p_y = s
+    elif a_x == 0 and a_y == 0:
+        p_x = p; p_y = p
+    else:
+        p_x = None; p_y = None
+    return (p_x, p_y)
+
+
+# Create the prisoners' dilemma game
+def pd_game_b(a_x, a_y, b):
+    if a_x == 1 and a_y == 1:
+        p_x = 1; p_y = 1
+    elif a_x == 1 and a_y == 0:
+        p_x = 0; p_y = b
+    elif a_x == 0 and a_y == 1:
+        p_x = b; p_y = 0
+    elif a_x == 0 and a_y == 0:
+        p_x = 0; p_y = 0
+    else:
+        p_x = None; p_y = None
+    return p_x, p_y
+
+
+def generate_well_mixed_network(popu_size):
+    g_network = nx.complete_graph(popu_size)
+    adj_array = nx.to_numpy_array(g_network)
+    adj_link = []
+    for i in range(adj_array.shape[0]):
+        adj_link.append(np.where(adj_array[i] == 1)[0])
+    g_edge = nx.Graph()
+    for i in range(len(adj_link)):
+        for j in range(len(adj_link[i])):
+            g_edge.add_edge(i, adj_link[i][j])
+    return np.array(adj_link), np.array(g_edge.edges())
 
 
 # Generate the list of actions available in this game
@@ -21,19 +64,6 @@ def gen_states(actions):
     return states
 
 
-# Create the prisoners' dilemma game
-def pd_game_b(a_x, a_y, b):
-    if a_x == 1 and a_y == 1:
-        p_x = 1; p_y = 1
-    elif a_x == 1 and a_y == 0:
-        p_x = 0; p_y = b
-    elif a_x == 0 and a_y == 1:
-        p_x = b; p_y = 0
-    elif a_x == 0 and a_y == 0:
-        p_x = 0; p_y = 0
-    else:
-        p_x = None; p_y = None
-    return p_x, p_y
 
 
 def alpha_time(time_step):
@@ -204,8 +234,3 @@ if __name__ == "__main__":
     strategy = A.get_strategy()
     print(q_table)
     print(q_table[(0, 0)][1])
-
-
-
-
-
