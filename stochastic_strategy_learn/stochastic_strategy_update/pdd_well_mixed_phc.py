@@ -3,7 +3,7 @@ import networkx as nx
 from itertools import permutations
 
 
-def pdd_game(a_x, a_y, r, s, t, p):
+def pd_game(a_x, a_y, r, s, t, p):
     if a_x == 1 and a_y == 1:
         p_x = r; p_y = r
     elif a_x == 1 and a_y == 0:
@@ -64,29 +64,27 @@ def gen_states(actions):
     return states
 
 
-
-
 def alpha_time(time_step):
-    return 1 / (10 + 0.002 * time_step)
+    return 1 / (10 + 0.0001 * time_step)
 
 
 def epsilon_time(time_step):
-    return 0.5 / (1 + 0.001 * time_step)
+    return 0.5 / (1 + 0.0001 * time_step)
 
 
 class Agent:
     def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None):
         self.agent_id = agent_id
         self.link = link
-        self.payoffs = 0
+        self.payoff = 0
         self.time_step = 0
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.actions = gen_actions()
-        self.states = gen_states(self.actions)
-        self.q_table = {}
-        self.strategy = {}
+        self.len_a = len(self.actions)
+        self.a_values = np.zeros(self.len_a)
+        self.strategy = np.zeros(self.len_a)
 
     def get_id(self):
         return self.agent_id
@@ -97,17 +95,20 @@ class Agent:
     def get_actions(self):
         return self.actions
 
-    def get_states(self):
-        return self.states
-
-    def get_q_table(self):
-        return self.q_table
+    def get_a_values(self):
+        return self.a_values
 
     def get_strategy(self):
         return self.strategy
 
-    def get_payoffs(self):
-        return self.payoffs
+    def get_payoff(self):
+        return self.payoff
+
+    def set_payoff(self, n_payoff):
+        self.payoff = n_payoff
+
+    def add_payoff(self, n_payoff):
+        self.payoff += n_payoff
 
     def set_time_step(self, t):
         self.time_step = t
@@ -125,133 +126,164 @@ class Agent:
         if new_epsilon:
             self.epsilon = new_epsilon
         else:
-            self.epsilon = 0.3
+            self.epsilon = epsilon_time(t)
 
     def initial_strategy(self):
         """
-        Initialize strategy, in each states, play each action by the same probability.
+        Initialize strategy, play each action by the same probability.
         :return:
         """
-        len_actions = len(self.actions)
-        initial_value = 1.0 / len_actions
-        for i in self.states:
-            self.strategy[i] = [0 for _ in range(len_actions)]
-            for j in range(len_actions):
-                self.strategy[i][j] = initial_value
+        for i in range(self.len_a):
+            self.strategy[i] = 1 / self.len_a
 
-    def initial_q_table(self):
+    def initial_a_values(self):
         """
-        Initialize the qTable to all zeros
+        Initialize the action values to all zeros
         :return:
         """
-        len_actions = len(self.actions)
-        for i in self.states:
-            self.q_table[i] = [0.0 for _ in range(len_actions)]
+        for i in range(self.len_a):
+            self.a_values[i] = 0
 
-    def choose_action(self, ob):
+    def choose_action(self):
         pass
 
-    def update_q_table(self, s, a, r, s_):
-        # Q-learning methods
-        # self.check_state_exist(s_)
-        q_predict = self.q_table[s][a]
-        q_target = r + self.gamma * max(self.q_table[s_])
-        self.q_table[s][a] += self.alpha * (q_target - q_predict)
+    def update_a_values(self, a):
+        self.a_values[a] = (1 - self.alpha) * self.a_values[a] \
+                           + self.alpha * (self.payoff + self.gamma * np.amax(self.a_values[:]))
 
-    def update_strategy(self, s, a):
+    def update_strategy(self):
         pass
 
     def update_time_step(self):
         self.time_step += 1
 
+    def update_alpha(self):
+        self.alpha = 1 / (10 + 0.0001 * self.time_step)
+
+    def update_epsilon(self):
+        self.epsilon = 0.5 / (1 + 0.0001 * self.time_step)
+
 
 class AgentFixedStrategy(Agent):
-    def __init__(self, alpha=None, gamma=None, epsilon=None, fixed_strategy=None):
-        Agent.__init__(self, alpha, gamma, epsilon)
-        self.strategy_vector = fixed_strategy
-        print(self.strategy_vector)
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None, fixed_strategy=None):
+        Agent.__init__(self, agent_id, link, alpha, gamma, epsilon)
+        self.fixed_strategy = fixed_strategy
 
     def initial_strategy(self):
-        len_actions = len(self.actions)
-        for i in self.states:
-            self.strategy[i] = [0 for _ in range(len_actions)]
-        self.strategy[(1, 1)][0] = 1 - self.strategy_vector[0]
-        self.strategy[(1, 1)][1] = self.strategy_vector[0]
-        self.strategy[(1, 0)][0] = 1 - self.strategy_vector[1]
-        self.strategy[(1, 0)][1] = self.strategy_vector[1]
-        self.strategy[(0, 1)][0] = 1 - self.strategy_vector[2]
-        self.strategy[(0, 1)][1] = self.strategy_vector[2]
-        self.strategy[(0, 0)][0] = 1 - self.strategy_vector[3]
-        self.strategy[(0, 0)][1] = self.strategy_vector[3]
+        self.strategy = self.fixed_strategy
 
-    def choose_action(self, ob):
-        a = np.random.choice(self.actions, size=1, p=self.strategy[ob])[0]
+    def choose_action(self):
+        a = np.random.choice(self.actions, size=1, p=self.strategy)[0]
         return a
 
-class AgentQ(Agent):
-    def __init__(self, alpha=None, gamma=None, epsilon=None):
-        Agent.__init__(self, alpha, gamma, epsilon)
 
-    def choose_action(self, ob):
-        a_v = np.array(self.q_table[ob])
+class AgentQ(Agent):
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None):
+        Agent.__init__(self, agent_id, link, alpha, gamma, epsilon)
+
+    def choose_action(self):
+        a_v = np.array(self.a_values)
         alt_actions = np.where(a_v == np.amax(a_v))[0]
         a = np.random.choice(alt_actions)
         return a
 
 
 class AgentPHC(Agent):
-    def __init__(self, alpha=None, gamma=None, epsilon=None, delta=None):
-        Agent.__init__(self, alpha, gamma, epsilon)
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None, delta=None):
+        Agent.__init__(self, agent_id, link, alpha, gamma, epsilon)
         self.delta = delta
-        self.delta_table = {}
-        self.delta_top_table = {}
+        self.delta_table = np.zeros(self.len_a)
+        self.delta_top_table = np.zeros(self.len_a)
 
-    def initial_delta(self):
-        """
-        Initialize the delta_table to all zeros.
-        :return:
-        """
-        len_actions = len(self.actions)
-        for i in self.states:
-            self.delta_table[i] = np.zeros(len_actions)
-
-    def choose_action(self, ob):
+    def choose_action(self):
         """
         Choose action epsilon-greedy
-        :param ob: the states agent's observation
         :return:
         action: the chosen action
         """
         if np.random.binomial(1, self.epsilon) == 1:
             a = np.random.choice(self.actions)
         else:
-            a = np.random.choice(self.actions, size=1, p=self.strategy[ob])[0]
+            print(self.strategy)
+            a = np.random.choice(self.actions, size=1, p=self.strategy)[0]
         return a
 
-    def update_strategy(self, s, a):
-        max_a = np.random.choice(np.argwhere(self.q_table[s] == np.amax(self.q_table[s])))[0]
-        len_a = len(self.actions)
-        for j in range(len_a):
-            self.delta_table[s][j] = min(np.array[self.strategy[s][j], self.delta / (len_a - 1)])
-        sum_delta = 0.0
+    def update_strategy(self):
+        max_a = np.random.choice(np.argwhere(self.a_values == np.amax(self.a_values))[0])
+        for i in range(self.len_a):
+            self.delta_table[i] = min(np.array([self.strategy[i], self.delta / (self.len_a - 1)]))
+        sum_delta = 0
         for act_i in [act_j for act_j in self.actions if act_j != max_a]:
-            self.delta_top_table[s][act_i] = -self.delta_table[s][act_i]
-            sum_delta += self.delta_table[s][act_i]
-        self.delta_top_table[s][max_a] = sum_delta
-        for j in range(len_a):
-            self.strategy[s][j] += self.delta_top_table[s][j]
+            self.delta_top_table[act_i] = -self.delta_table[act_i]
+            sum_delta += self.delta_table[act_i]
+        self.delta_top_table[max_a] = sum_delta
+        for i in range(self.len_a):
+            self.strategy[i] += self.delta_top_table[i]
+
+    def valid_strategy(self):
+        for i in range(self.len_a):
+            if self.strategy[i] > 1.0:
+                self.strategy[i] = 1.0
+            if self.strategy[i] < 0.0:
+                self.strategy[i] = 0.0
 
 
-def initialize_population(popu_size, adj_link, edge, contribution):
+def initialize_population(popu_size, adj_link):
     popu = []
     for i in range(popu_size):
-        popu.append(Agent(i, adj_link[i], 0.))
+        popu.append(AgentPHC(i, adj_link[i], gamma=0.9, delta=0.0001))
+    for i in range(popu_size):
+        popu[i].initial_strategy()
+        popu[i].initial_a_values()
+        popu[i].set_time_step(t = 0)
+        popu[i].set_alpha(t=0)
+        popu[i].set_epsilon(t=0)
+    return popu
+
+
+def learn_process(popu, edge, r, s, t, p):
+    total_num = len(popu)
+    for i in range(total_num):
+        popu[i].set_payoff(0)
+    a_l = [0 for _ in range(total_num)]
+    c_l = [0 for _ in range(total_num)]
+    for i in range(total_num):
+        a_l[i] = popu[i].choose_action()
+    for pair in edge:
+        ind_x = pair[0]
+        ind_y = pair[1]
+        p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
+        popu[ind_x].add_payoff(p_x)
+        popu[ind_y].add_payoff(p_y)
+    for i in range(total_num):
+        popu[i].update_a_values(a_l[i])
+        popu[i].update_strategy()
+        popu[i].valid_strategy()
+        popu[i].update_time_step()
+        popu[i].update_alpha()
+        popu[i].update_epsilon()
+    return popu
+
+
+def run_learn_process(popu_size, adj_link, edge, run_time, sample_time, r, s, t, p):
+    popu = initialize_population(popu_size, adj_link)
+    for _ in range(run_time):
+        print(_)
+        popu = learn_process(popu, edge, r, s, t, p)
+        for i in range(popu_size):
+            print(popu[i].get_strategy())
+    sample_stratey = []
+    for _ in range(sample_time):
+        popu = learn_process(popu, edge, r, s, t, p)
+        for i in range(popu_size):
+            print(popu[i].get_strategy())
+
 
 if __name__ == "__main__":
-    A = Agent(0.1, 0.2, 0.3)
-    A.initial_strategy()
-    A.initial_q_table()
-    q_table = A.get_q_table()
-    strategy = A.get_strategy()
-    print(q_table)
-    print(q_table[(0, 0)][1])
+    popu_size = 10
+    run_time = 5000
+    sample_time = 200
+    r = 3; s = 0; t = 5; p = 1
+    adj_link, edge = generate_well_mixed_network(popu_size)
+    run_learn_process(popu_size, adj_link, edge, run_time, sample_time, r, s, t, p)
+

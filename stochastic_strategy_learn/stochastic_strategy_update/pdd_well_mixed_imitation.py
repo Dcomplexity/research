@@ -1,12 +1,11 @@
 import numpy as np
-import pandas as pd
 import networkx as nx
 import math
 import random
-import datetime
+from itertools import permutations
 
 
-def pdd_game(a_x, a_y, r, s, t, p):
+def pd_game(a_x, a_y, r, s, t, p):
     if a_x == 1 and a_y == 1:
         p_x = r; p_y = r
     elif a_x == 1 and a_y == 0:
@@ -18,6 +17,21 @@ def pdd_game(a_x, a_y, r, s, t, p):
     else:
         p_x = None; p_y = None
     return (p_x, p_y)
+
+
+# Create the prisoners' dilemma game
+def pd_game_b(a_x, a_y, b):
+    if a_x == 1 and a_y == 1:
+        p_x = 1; p_y = 1
+    elif a_x == 1 and a_y == 0:
+        p_x = 0; p_y = b
+    elif a_x == 0 and a_y == 1:
+        p_x = b; p_y = 0
+    elif a_x == 0 and a_y == 0:
+        p_x = 0; p_y = 0
+    else:
+        p_x = None; p_y = None
+    return p_x, p_y
 
 
 def generate_well_mixed_network(popu_size):
@@ -33,15 +47,46 @@ def generate_well_mixed_network(popu_size):
     return np.array(adj_link), np.array(g_edge.edges())
 
 
+# Generate the list of actions available in this game
+def gen_actions():
+    defect = 0
+    cooperate = 1
+    actions = [defect, cooperate]
+    return actions
+
+
+# Generate the list of states available in this game
+def gen_states(actions):
+    states = []
+    for _ in permutations(actions, 2):
+        states.append(_)
+    for _ in actions:
+        states.append((_, _))
+    states.sort()
+    return states
+
+
+def alpha_time(time_step):
+    return 1 / (10 + 0.0001 * time_step)
+
+
+def epsilon_time(time_step):
+    return 0.5 / (1 + 0.0001 * time_step)
+
 
 class Agent:
-    def __init__(self, agent_id, link, strategy, contribution):
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None):
         self.agent_id = agent_id
         self.link = link
-        self.strategy = strategy
-        self.ostrategy = strategy
-        self.contribution = contribution
         self.payoff = 0
+        self.time_step = 0
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.actions = gen_actions()
+        self.len_a = len(self.actions)
+        self.a_values = np.zeros(self.len_a)
+        self.strategy = np.zeros(self.len_a)
 
     def get_id(self):
         return self.agent_id
@@ -49,104 +94,190 @@ class Agent:
     def get_link(self):
         return self.link[:]
 
+    def get_actions(self):
+        return self.actions
+
+    def get_a_values(self):
+        return self.a_values
+
     def get_strategy(self):
         return self.strategy
 
-    def get_ostrategy(self):
-        return self.ostrategy
+    def get_payoff(self):
+        return self.payoff
 
-    def get_contribution(self):
-        return self.contribution
+    def set_payoff(self, n_payoff):
+        self.payoff = n_payoff
 
-    def get_payoffs(self):
-        return self.payoffs
+    def add_payoff(self, n_payoff):
+        self.payoff += n_payoff
+
+    def set_time_step(self, t):
+        self.time_step = t
 
     def set_strategy(self, other_strategy):
         self.strategy = other_strategy
 
-    def set_ostrategy(self):
-        self.ostrategy = self.strategy
+    def set_alpha(self, t, new_alpha=None):
+        if new_alpha:
+            self.alpha = new_alpha
+        else:
+            self.alpha = alpha_time(t)
 
-    def set_contribution(self, new_contribution):
-        self.contribution = new_contribution
+    def set_epsilon(self, t, new_epsilon=None):
+        if new_epsilon:
+            self.epsilon = new_epsilon
+        else:
+            self.epsilon = epsilon_time(t)
 
-    def set_payoffs(self, p):
-        self.payoffs = p
+    def initial_strategy(self):
+        """
+        Initialize strategy, play each action by the same probability.
+        :return:
+        """
+        for i in range(self.len_a):
+            self.strategy[i] = 1 / self.len_a
 
-    def add_payoffs(self, p):
-        self.payoffs = self.payoffs + p
+    def initial_a_values(self):
+        """
+        Initialize the action values to all zeros
+        :return:
+        """
+        for i in range(self.len_a):
+            self.a_values[i] = 0
+
+    def choose_action(self):
+        pass
+
+    def update_a_values(self, a):
+        self.a_values[a] = (1 - self.alpha) * self.a_values[a] \
+                           + self.alpha * (self.payoff + self.gamma * np.amax(self.a_values[:]))
+
+    def update_strategy(self):
+        pass
+
+    def update_time_step(self):
+        self.time_step += 1
+
+    def update_alpha(self):
+        self.alpha = 1 / (10 + 0.0001 * self.time_step)
+
+    def update_epsilon(self):
+        self.epsilon = 0.5 / (1 + 0.0001 * self.time_step)
 
 
-def initialize_population(popu_size, adj_link, edge, contribution):
+class AgentImitation(Agent):
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None, delta=None):
+        Agent.__init__(self, agent_id, link, alpha, gamma, epsilon)
+        self.delta = delta
+        self.delta_table = np.zeros(self.len_a)
+        self.delta_top_table = np.zeros(self.len_a)
+
+    def choose_action(self):
+        """
+        Choose action epsilon-greedy
+        :return:
+        action: the chosen action
+        :return:
+        """
+        if np.random.binomial(1, self.epsilon) == 1:
+            a = np.random.choice(self.actions)
+        else:
+            print(self.strategy)
+            a = np.random.choice(self.actions, size=1, p=self.strategy)[0]
+        return a
+
+    def imitation_strategy(self, p_j, a_i, a_j):
+        for i in range(self.len_a):
+            self.delta_table[i] = min(np.array([self.strategy[i], self.delta / (self.len_a - 1)]))
+        sum_delta = 0
+        if random.random() < 1 / (1 + math.e ** (2 * (self.payoff - p_j))):
+            for act_i in [act_j for act_j in self.actions if act_j != a_j]:
+                self.delta_top_table[act_i] = -self.delta_table[act_i]
+                sum_delta += self.delta_table[act_i]
+            self.delta_top_table[a_j] = sum_delta
+            for i in range(self.len_a):
+                self.strategy[i] += self.delta_top_table[i]
+        else:
+            for act_i in [act_j for act_j in self.actions if act_j != a_i]:
+                self.delta_top_table[act_i] = -self.delta_table[act_i]
+                sum_delta += self.delta_table[act_i]
+            self.delta_top_table[a_i] = sum_delta
+            for i in range(self.len_a):
+                self.strategy[i] += self.delta_top_table[i]
+
+    def valid_strategy(self):
+        for i in range(self.len_a):
+            if self.strategy[i] > 1.0:
+                self.strategy[i] = 1.0
+            if self.strategy[i] < 0.0:
+                self.strategy[i] = 0.0
+
+
+def initialize_population(popu_size, adj_link):
     popu = []
     for i in range(popu_size):
-        popu.append(Agent(i, adj_link[i], 0.5, contribution))
+        popu.append(AgentImitation(i, adj_link[i], gamma=0.9, delta=0.0001))
+    for i in range(popu_size):
+        popu[i].initial_strategy()
+        popu[i].initial_a_values()
+        popu[i].set_time_step(t=0)
+        popu[i].set_alpha(t=0)
+        popu[i].set_epsilon(t=0)
     return popu
 
 
-def evolution_one_step(popu, edge, r, s, t, p):
+def imitation_process(popu, edge, r, s, t, p):
     total_num = len(popu)
     for i in range(total_num):
-        popu[i].set_payoffs(0)
+        popu[i].set_payoff(0)
     a_l = [0 for _ in range(total_num)]
     c_l = [0 for _ in range(total_num)]
     for i in range(total_num):
-        if np.random.random() < popu[i].get_strategy():
-            a_l[i] = 1
-            c_l[i] = popu[i].get_contribution()
-        else:
-            a_l[i] = 0
-            c_l[i] = 0
+        a_l[i] = popu[i].choose_action()
     for pair in edge:
         ind_x = pair[0]
         ind_y = pair[1]
-        p_x, p_y = pdd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
-        popu[ind_x].add_payoffs(p_x)
-        popu[ind_y].add_payoffs(p_y)
+        p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
+        popu[ind_x].add_payoff(p_x)
+        popu[ind_y].add_payoff(p_y)
     for i in range(total_num):
-        ind = popu[i]
+        while True:
+            ind_j = random.choice(range(total_num))
+            if i != ind_j:
+                break
+        p_j = popu[ind_j].get_payoff()
         a_i = a_l[i]
-        s_i = ind.get_strategy()
-        p_i = ind.get_payoffs()
-        neigh_i = ind.get_link()
-        neigh_i_num = len(neigh_i)
-        s_g_i = 0
-        for j in neigh_i:
-            oppon = popu[j]
-            a_j = a_l[j]
-            p_j = oppon.get_payoffs()
-            s_g_i += s_i * (1 - s_i) * (a_i - a_j) * (0.5 - (1 / (1 + math.e ** (2 * (p_i - p_j))))) / neigh_i_num
-        s_i = s_i + s_g_i
-        ind.set_strategy(s_i)
+        a_j = a_l[ind_j]
+        popu[i].imitation_strategy(p_j, a_i, a_j)
+        popu[i].valid_strategy()
+        popu[i].update_time_step()
+        popu[i].update_alpha()
+        popu[i].update_epsilon()
     return popu
 
 
-def run(popu_size, contribution, adj_link, edge, run_time, sample_time, r, s, t, p):
-    popu = initialize_population(popu_size, adj_link, edge, contribution)
-    total_num = len(popu)
+def run_imitation_process(popu_size, adj_link, edge, run_time, sample_time, r, s, t, p):
+    popu = initialize_population(popu_size, adj_link)
     for _ in range(run_time):
-        popu = evolution_one_step(popu, edge, r, s, t, p)
-    sample_strategy = []
+        print(_)
+        popu = imitation_process(popu, edge, r, s, t, p)
+        for i in range(popu_size):
+            print(popu[i].get_strategy())
     for _ in range(sample_time):
-        popu = evolution_one_step(popu, edge, r, s, t, p)
-        c_frac = 0
-        for i in range(total_num):
-            c_frac += popu[i].get_strategy()
-        c_frac = c_frac / total_num
-        sample_strategy.append(c_frac)
-    return np.mean(sample_strategy, axis=0)
+        popu = imitation_process(popu, edge, r, s, t, p)
+        for i in range(popu_size):
+            print(popu[i].get_strategy())
 
 
 if __name__ == '__main__':
-    popu_size = 100
-    c = 1.0
-    run_time = 1000
-    sample_time = 20
-    init_num = 5
+    popu_size = 10
+    run_time = 5000
+    sample_time = 200
     r = 3; s = 0; t = 5; p = 1
-    result_l = []
-    for _ in range(init_num):
-        adj, edge = generate_well_mixed_network(popu_size)
-        sample_result = run(popu_size, c, adj, edge, run_time, sample_time, r, s, t, p)
-        result_l.append(sample_result)
-    print(np.mean(result_l))
+    adj_link, edge = generate_well_mixed_network(popu_size)
+    run_imitation_process(popu_size, adj_link, edge, run_time, sample_time, r, s, t, p)
+
+
+
+
