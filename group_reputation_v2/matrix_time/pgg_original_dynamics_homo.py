@@ -114,6 +114,7 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
     w = calc_trans_matrix(m, n, c_dist, payoff, mu)
     group_c_dist_history = []
     for step in range(run_t):
+        print(w)
         group_c_dist_history.append(c_dist.flatten())
         c_dist = dynamic_one_round(m, c_dist, w)
         w = calc_trans_matrix(m, n, c_dist, payoff, mu)
@@ -124,7 +125,7 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
 if __name__ == '__main__':
     g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
     init_type = 'homo'
-    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
+    gamma_l = np.round(np.arange(0.7, 0.71, 0.05), 2)
     step_l = np.arange(run_time + 1)
     gamma_dist_history = []
     for r in gamma_l:

@@ -48,6 +48,13 @@ def pd_donation_c_game(a_x, a_y, b, c):
         return "Error"
 
 
+# public goods game
+def pgg_game(a_l, gamma):  # r in (0, 1]
+    a_n = len(a_l)
+    p = np.array([np.sum(a_l) * gamma * a_n / a_n for _ in range(a_n)] - np.array(a_l))
+    return p
+
+
 def generate_well_mixed_network(popu_size):
     g_network = nx.complete_graph(popu_size)
     adj_array = nx.to_numpy_array(g_network)
@@ -258,29 +265,19 @@ def initialize_population(popu_size, adj_link):
     return popu
 
 
-def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, game_type=None):
+def imitation_process(popu, adj_link, gamma=1.0):
+    print(adj_link)
     total_num = len(popu)
     for i in range(total_num):
         popu[i].set_payoff(0)
     a_l = [0 for _ in range(total_num)]
     c_l = [0 for _ in range(total_num)]
+    p_l = [0 for _ in range(total_num)]
     for i in range(total_num):
         a_l[i] = popu[i].choose_action()
-    for pair in edge:
-        ind_x = pair[0]
-        ind_y = pair[1]
-        if game_type == 'pd':
-            p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
-        elif game_type == 'pd_b':
-            p_x, p_y = pd_game_b(a_l[ind_x], a_l[ind_y], b)
-        elif game_type == 'pd_donation_c':
-            benifit = b_c * c
-            p_x, p_y = pd_donation_c_game(a_l[ind_x], a_l[ind_y], c, benifit)
-        else:
-            p_x = 0; p_y = 0;
-            print("wrong game type")
-        popu[ind_x].add_payoff(p_x)
-        popu[ind_y].add_payoff(p_y)
+    p_l = pgg_game(a_l, gamma)
+    for i in range(total_num):
+        popu[i].add_payoff(p_l[i])
     for i in range(total_num):
         while True:
             ind_j = random.choice(range(total_num))
@@ -297,16 +294,15 @@ def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, gam
     return popu
 
 
-def run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
-                          r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, game_type=None):
+def run_imitation_process(popu_size, adj_link, gamma=1.0):
     popu = initialize_population(popu_size, adj_link)
     for _ in range(run_time):
         print(_)
-        popu = imitation_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
+        popu = imitation_process(popu, adj_link, gamma)
         for i in range(popu_size):
             print(popu[i].get_strategy())
     for _ in range(sample_time):
-        popu = imitation_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
+        popu = imitation_process(popu, adj_link, gamma)
         for i in range(popu_size):
             print(popu[i].get_strategy())
 
@@ -316,13 +312,11 @@ if __name__ == '__main__':
     xdim = 10; ydim = 10
     run_time = 10000
     sample_time = 200
-    r = 3; s = 0; t = 5; p = 1; b=0.8; c = 1.0; b_c = 2.4
+    gamma = 0.1
     adj_link, edge = generate_well_mixed_network(popu_size)
     # adj_link, edge = generate_lattice(popu_size, xdim, ydim)
     # game_type = 'pd_donation_c'
-    game_type = 'pd_b'
-    run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
-                          r, s, t, p, b, c, b_c, game_type)
+    run_imitation_process(popu_size, adj_link, gamma)
 
 
 

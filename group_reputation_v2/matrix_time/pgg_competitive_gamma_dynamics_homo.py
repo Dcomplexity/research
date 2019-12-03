@@ -192,6 +192,7 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
     group_c_dist_history = []
     group_c_dist_history.append(c_dist.flatten())
     for step in range(run_t):
+        print(w)
         r_l = calc_enhancement_w_l(m, n, c_dist, r, w)
         payoff = calc_payoff(m, n, c, r_l)
         c_dist = dynamic_one_round(m, c_dist, w)
@@ -203,7 +204,7 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
 if __name__ == '__main__':
     g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
     init_type = 'homo'
-    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
+    gamma_l = np.round(np.arange(0.7, 0.71, 0.05), 2)
     step_l = np.arange(run_time + 1)
     gamma_dist_history = []
     for r in gamma_l:

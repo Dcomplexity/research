@@ -32,6 +32,20 @@ def pd_game_b(a_x, a_y, b):
     return p_x, p_y
 
 
+# Create donation game
+def pd_donation_c_game(a_x, a_y, b, c):
+    if a_x == 1 and a_y == 1:
+        return b-c, b-c
+    elif a_x == 1 and a_y == 0:
+        return -c, b
+    elif a_x == 0 and a_y == 1:
+        return b, -c
+    elif a_x == 0 and a_y == 0:
+        return 0, 0
+    else:
+        return "Error"
+
+
 def generate_well_mixed_network(popu_size):
     g_network = nx.complete_graph(popu_size)
     adj_array = nx.to_numpy_array(g_network)
@@ -43,6 +57,23 @@ def generate_well_mixed_network(popu_size):
         for j in range(len(adj_link[i])):
             g_edge.add_edge(i, adj_link[i][j])
     return np.array(adj_link), np.array(g_edge.edges())
+
+
+def generate_lattice(popu_size, xdim, ydim):
+    if popu_size != xdim * ydim:
+        print("Wrong")
+        return 0
+    else:
+        g_network = nx.grid_2d_graph(xdim, ydim, periodic=True)
+        adj_array = nx.to_numpy_array(g_network)
+        adj_link = []
+        for i in range(adj_array.shape[0]):
+            adj_link.append(np.where(adj_array[i] == 1)[0])
+        g_edge = nx.Graph()
+        for i in range(len(adj_link)):
+            for j in range(len(adj_link[i])):
+                g_edge.add_edge(i, adj_link[i][j])
+        return np.array(adj_link), np.array(g_edge.edges())
 
 
 # Generate the list of actions available in this game
@@ -231,7 +262,7 @@ class AgentPHC(Agent):
 def initialize_population(popu_size, adj_link):
     popu = []
     for i in range(popu_size):
-        popu.append(AgentPHC(i, adj_link[i], gamma=0.9, delta=0.0001))
+        popu.append(AgentPHC(i, adj_link[i], gamma=0.9, delta=0.001))
     for i in range(popu_size):
         popu[i].initial_strategy()
         popu[i].initial_a_values()
@@ -241,7 +272,7 @@ def initialize_population(popu_size, adj_link):
     return popu
 
 
-def learn_process(popu, edge, r=3, s=0, t=5, p=1, b=1, game_type=None):
+def learn_process(popu, edge, r=3.0, s=0.0, t=5.0, p=1.0, b=1.0, c=1.0, b_c=1.0, game_type=None):
     total_num = len(popu)
     for i in range(total_num):
         popu[i].set_payoff(0)
@@ -256,6 +287,9 @@ def learn_process(popu, edge, r=3, s=0, t=5, p=1, b=1, game_type=None):
             p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
         elif game_type == 'pd_b':
             p_x, p_y = pd_game_b(a_l[ind_x], a_l[ind_y], b)
+        elif game_type == 'pd_donation_c':
+            benefit = b_c * c
+            p_x, p_y = pd_donation_c_game(a_l[ind_x], a_l[ind_y], c, benefit)
         else:
             p_x = 0; p_y = 0
             print("wrong game type")
@@ -271,26 +305,31 @@ def learn_process(popu, edge, r=3, s=0, t=5, p=1, b=1, game_type=None):
     return popu
 
 
-def run_learn_process(popu_size, adj_link, edge, run_time, sample_time, r=3, s=0, t=5, p=1, b=1, game_type=None):
+def run_learn_process(popu_size, adj_link, edge, run_time, sample_time,
+                      r=3.0, s=0.0, t=5.0, p=1.0, b=1.0, c=1.0, b_c=1.0, game_type=None):
     popu = initialize_population(popu_size, adj_link)
     for _ in range(run_time):
         print(_)
-        popu = learn_process(popu, edge, r, s, t, p, b, game_type)
+        popu = learn_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
         for i in range(popu_size):
             print(popu[i].get_strategy())
     sample_stratey = []
     for _ in range(sample_time):
-        popu = learn_process(popu, edge, r, s, t, p, b, game_type)
+        popu = learn_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
         for i in range(popu_size):
             print(popu[i].get_strategy())
 
 
 if __name__ == "__main__":
-    popu_size = 10
+    popu_size = 100
+    xdim = 10; ydim = 10
     run_time = 10000
     sample_time = 200
-    r = 3; s = 0; t = 5; p = 1; b=0.9
-    adj_link, edge = generate_well_mixed_network(popu_size)
+    r = 3; s = 0; t = 5; p = 1; b = 0.9; c = 1.0; b_c = 2.4
+    # adj_link, edge = generate_well_mixed_network(popu_size)
+    adj_link, edge = generate_lattice(popu_size, xdim, ydim)
+    # game_type = 'pd_donation_c'
     game_type = 'pd_b'
-    run_learn_process(popu_size, adj_link, edge, run_time, sample_time, r, s, t, p, b, game_type)
+    run_learn_process(popu_size, adj_link, edge, run_time, sample_time,
+                      r, s, t, p, b, c, b_c, game_type)
 
