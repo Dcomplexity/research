@@ -241,7 +241,7 @@ def initialize_population(popu_size, adj_link):
     return popu
 
 
-def learn_process(popu, edge, r, s, t, p):
+def learn_process(popu, edge, r=3, s=0, t=5, p=1, b=1, game_type=None):
     total_num = len(popu)
     for i in range(total_num):
         popu[i].set_payoff(0)
@@ -252,7 +252,13 @@ def learn_process(popu, edge, r, s, t, p):
     for pair in edge:
         ind_x = pair[0]
         ind_y = pair[1]
-        p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
+        if game_type == 'pd':
+            p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
+        elif game_type == 'pd_b':
+            p_x, p_y = pd_game_b(a_l[ind_x], a_l[ind_y], b)
+        else:
+            p_x = 0; p_y = 0
+            print("wrong game type")
         popu[ind_x].add_payoff(p_x)
         popu[ind_y].add_payoff(p_y)
     for i in range(total_num):
@@ -265,25 +271,26 @@ def learn_process(popu, edge, r, s, t, p):
     return popu
 
 
-def run_learn_process(popu_size, adj_link, edge, run_time, sample_time, r, s, t, p):
+def run_learn_process(popu_size, adj_link, edge, run_time, sample_time, r=3, s=0, t=5, p=1, b=1, game_type=None):
     popu = initialize_population(popu_size, adj_link)
     for _ in range(run_time):
         print(_)
-        popu = learn_process(popu, edge, r, s, t, p)
+        popu = learn_process(popu, edge, r, s, t, p, b, game_type)
         for i in range(popu_size):
             print(popu[i].get_strategy())
     sample_stratey = []
     for _ in range(sample_time):
-        popu = learn_process(popu, edge, r, s, t, p)
+        popu = learn_process(popu, edge, r, s, t, p, b, game_type)
         for i in range(popu_size):
             print(popu[i].get_strategy())
 
 
 if __name__ == "__main__":
     popu_size = 10
-    run_time = 5000
+    run_time = 10000
     sample_time = 200
-    r = 3; s = 0; t = 5; p = 1
+    r = 3; s = 0; t = 5; p = 1; b=0.9
     adj_link, edge = generate_well_mixed_network(popu_size)
-    run_learn_process(popu_size, adj_link, edge, run_time, sample_time, r, s, t, p)
+    game_type = 'pd_b'
+    run_learn_process(popu_size, adj_link, edge, run_time, sample_time, r, s, t, p, b, game_type)
 
