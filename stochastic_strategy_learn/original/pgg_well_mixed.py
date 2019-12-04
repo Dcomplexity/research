@@ -88,17 +88,9 @@ def evolution_one_step(popu, gamma):
         else:
             a_l[i] = 1
             c_l[i] = popu[i].get_contribution()
+    p_l = pgg_game(c_l, gamma)
     for i in range(total_num):
-        neigh = popu[i].get_link()
-        neigh = np.append(neigh, i)  # public goods game, add the focal individual himself to the group
-        a_neigh = []
-        c_neigh = []
-        for j in neigh:
-            a_neigh.append(a_l[j])
-            c_neigh.append(c_l[j])
-        p_neigh_l = pgg_game(c_neigh, gamma)
-        for j in range(len(neigh)):
-            popu[neigh[j]].add_payoffs(p_neigh_l[j])
+        popu[i].add_payoffs(p_l[i])
     # Backup the strategy in this round
     for i in range(total_num):
         popu[i].set_ostrategy()
@@ -159,7 +151,7 @@ if __name__ == '__main__':
         result_gamma.append(np.mean(result, axis=0))
     result_gamma_pd = pd.DataFrame(result_gamma, index=gamma_l, columns=['d_frac', 'c_frac'])
     print(result_gamma_pd)
-    file_name = './results/pgg_lattice.csv'
+    file_name = './results/pgg_well_mixed.csv'
     result_gamma_pd.to_csv(file_name)
     end_time = datetime.datetime.now()
     print(end_time - start_time)

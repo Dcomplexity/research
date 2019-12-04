@@ -191,7 +191,7 @@ if __name__ == '__main__':
             result.append(sample_result)
         result_gamma.append(np.mean(result, axis=0))
     result_gamma_pd = pd.DataFrame(result_gamma, index=gamma_l, columns=['d_frac', 'c_frac'])
-    file_name = './results_old/pgg_price_contribution_diverse.csv'
+    file_name = './results/pgg_price_contribution_diverse.csv'
     result_gamma_pd.to_csv(file_name)
     end_time = datetime.datetime.now()
     print(end_time - start_time)
