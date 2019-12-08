@@ -208,14 +208,16 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
     w = calc_trans_matrix(m, n, c_dist, payoff, mu)
     group_c_dist_history = []
     group_c_dist_history.append(c_dist.flatten())
+    w_history = []
+    w_history.extend(w.reshape((-1, w.shape[-1]))[0:6])
     for step in range(run_t):
         r_l = calc_enhancement_w_l(m, n, c_dist, r, w)
         payoff = calc_payoff(m, n, c, r_l)
         c_dist = dynamic_one_round(m, c_dist, w)
         w = calc_trans_matrix(m, n, c_dist, payoff, mu)
         group_c_dist_history.append(c_dist.flatten())
-    w = w.reshape((-1, w.shape[-1]))
-    return group_c_dist_history, w
+        w_history.extend(w.reshape((-1, w.shape[-1]))[0:6])
+    return group_c_dist_history, w_history
 
 
 if __name__ == '__main__':
@@ -223,23 +225,23 @@ if __name__ == '__main__':
     init_type = 'hete'
     gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
-    group_l = np.arange(g_n * (g_s + 1))
+    group_l = np.arange((run_time + 1) * (g_s + 1))
     gamma_dist_history = []
-    w_l = []
+    w_history_l = []
     for r in gamma_l:
         print(r)
-        group_c_dist_history, w = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
-        w_l.extend(w)
+        group_c_dist_history, w_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
+        w_history_l.extend(w_history)
         gamma_dist_history.extend(group_c_dist_history)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     w_m_index = pd.MultiIndex.from_product([gamma_l, group_l], names=['gamma', 'group'])
     gamma_frac_history_pd = pd.DataFrame(gamma_dist_history, index=m_index)
-    w_pd = pd.DataFrame(w_l, index=w_m_index)
+    w_history_pd = pd.DataFrame(w_history_l, index=w_m_index)
     w_csv_file_name = './results/pgg_competitive_gamma_dynamics_w_%s.csv' % init_type
     csv_file_name = './results/pgg_competitive_gamma_dynamics_%s.csv' % init_type
     gamma_frac_history_pd.to_csv(csv_file_name)
-    w_pd.to_csv(w_csv_file_name)
+    w_history_pd.to_csv(w_csv_file_name)
     print(gamma_frac_history_pd)
-    print(w_pd)
+    print(w_history_pd)
 
 

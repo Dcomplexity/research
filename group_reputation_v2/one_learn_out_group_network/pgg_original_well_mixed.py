@@ -48,17 +48,29 @@ def initial_action(f_0, ind_pos, pos_ind):
 
 def game_one_round(a_l, gamma, ind_pos, pos_ind, g_s, w, mu):
     ind_n = len(ind_pos)
+    all_ind = np.arange(ind_n)
+    np.random.shuffle(all_ind)
     pos_n = len(pos_ind)
+    new_ind_pos = [0 for _ in range(ind_n)]
+    new_pos_ind = [[] for _ in range(pos_n)]
+    for i in range(pos_n):
+        for j in range(i * g_s, (i + 1) * g_s):
+            new_ind_pos[all_ind[j]] = i
+            new_pos_ind[i].append(all_ind[j])
     a_l_old = np.copy(a_l)
     ind_a_l = a_l.flatten()
     ind_a_l_old = a_l_old.flatten()
-    p_l = []
+    p_l = [0 for _ in range(ind_n)]
     for pos in range(pos_n):
-        g_a = np.copy(a_l[pos])
+        g_a = []
+        for j in new_pos_ind[pos]:
+            g_a.append(ind_a_l[j])
         g_p = pgg_game(g_a, gamma)
-        p_l.append(g_p)
-    p_l = np.array(p_l)
-    ind_p_l = p_l.flatten()
+        pos_i_n = 0
+        for j in new_pos_ind[pos]:
+            p_l[j] = g_p[[pos_i_n]]
+            pos_i_n += 1
+    ind_p_l = np.array(p_l)
     for pos in range(pos_n):
         if random.random() < mu:
             g_ind = pos_ind[pos]
@@ -78,7 +90,7 @@ def game_one_round(a_l, gamma, ind_pos, pos_ind, g_s, w, mu):
             t2 = random.random()
             if t2 < t1:
                 ind_a_l[ind] = ind_a_l_old[oppon]
-    return ind_a_l.reshape((pos_n, int(ind_n / pos_n)))
+    return ind_a_l
 
 
 def run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu):
@@ -87,14 +99,14 @@ def run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu):
         a_l = initial_action(f_0, ind_pos, pos_ind)
         for step in range(run_time):
             if round == 0:
-                f_history.append(a_l.mean(axis=1))
+                f_history.append(a_l.mean())
             else:
-                f_history[step] = round / (round + 1) * f_history[step] + 1 / (round + 1) * a_l.mean(axis=1)
+                f_history[step] = round / (round + 1) * f_history[step] + 1 / (round + 1) * a_l.mean()
             a_l = game_one_round(a_l, gamma, ind_pos, pos_ind, g_s, w, mu)
         if round == 0:
-            f_history.append(a_l.mean(axis=1))
+            f_history.append(a_l.mean())
         else:
-            f_history[run_time] = round / (round + 1) * f_history[run_time] + 1 / (round + 1) * a_l.mean(axis=1)
+            f_history[run_time] = round / (round + 1) * f_history[run_time] + 1 / (round + 1) * a_l.mean()
     return f_history
 
 
@@ -108,11 +120,11 @@ if __name__ == '__main__':
     gamma_frac_history = []
     for gamma in gamma_l:
         print(gamma)
-        f_0 = [(_ + 0.001) / g_n for _ in range(g_n)]
+        f_0 = [0.5 for _ in range(g_n)]
         history_sim_r = run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu)
         gamma_frac_history.extend(history_sim_r)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    gamma_frac_history_pd.to_csv('./results/pgg_original_hete.csv')
+    gamma_frac_history_pd.to_csv('./results/pgg_original_well_mixed.csv')
     print(gamma_frac_history_pd)
 

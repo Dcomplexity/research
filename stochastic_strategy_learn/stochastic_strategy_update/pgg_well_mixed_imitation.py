@@ -255,7 +255,7 @@ class AgentImitation(Agent):
 def initialize_population(popu_size, adj_link):
     popu = []
     for i in range(popu_size):
-        popu.append(AgentImitation(i, adj_link[i], gamma=0.9, delta=0.001))
+        popu.append(AgentImitation(i, adj_link[i], gamma=0.9, delta=0.0005))
     for i in range(popu_size):
         popu[i].initial_strategy()
         popu[i].initial_a_values()

@@ -36,7 +36,7 @@ def initialize_c_dist(m, n, init_type = 'homo'):
     if init_type == 'homo':
         ind_c_p = [0.5 for _ in range(m)]
     elif init_type == 'hete':
-        ind_c_p = [_ / m for _ in range(m)]
+        ind_c_p = [(_ + 0.001) / m for _ in range(m)]
     for pos in range(m):
         for i in range(n + 1):
             c_dist[pos][i] = binom.pmf(i, n, ind_c_p[pos])
@@ -112,40 +112,29 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
     payoff = calc_payoff(n, c, r)
     c_dist = initialize_c_dist(m, n, init_type)
     w = calc_trans_matrix(m, n, c_dist, payoff, mu)
-    group_c_dist_history = []
-    w_history = []
+    group_c_frac_history = []
     for step in range(run_t):
-        w_history.extend(w.reshape((-1, w.shape[-1]))[0:6])
-        group_c_dist_history.append(c_dist.flatten())
+        group_c_frac_history.append(np.copy(calc_group_frac(m, n, c_dist)))
         c_dist = dynamic_one_round(m, c_dist, w)
         w = calc_trans_matrix(m, n, c_dist, payoff, mu)
-    group_c_dist_history.append(c_dist.flatten())
-    w_history.extend(w.reshape((-1, w.shape[-1]))[0:6])
-    return group_c_dist_history, w_history
+    group_c_frac_history.append(np.copy(calc_group_frac(m, n, c_dist)))
+    return group_c_frac_history
 
 
 if __name__ == '__main__':
     g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
-    init_type = 'homo'
+    init_type = 'hete'
     gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
-    group_l = np.arange((run_time + 1) * (g_s + 1))
-    gamma_dist_history = []
-    w_history_l = []
+    gamma_frac_history = []
     for r in gamma_l:
         print(r)
-        group_c_dist_history, w_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
-        w_history_l.extend(w_history)
-        gamma_dist_history.extend(group_c_dist_history)
+        group_c_frac_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
+        gamma_frac_history.extend(group_c_frac_history)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
-    w_m_index = pd.MultiIndex.from_product([gamma_l, group_l], names=['gamma', 'group'])
-    gamma_frac_history_pd = pd.DataFrame(gamma_dist_history, index=m_index)
-    w_history_pd = pd.DataFrame(w_history_l, index=w_m_index)
-    w_csv_file_name = './results/pgg_original_dynamics_w_%s.csv' % init_type
+    gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
     csv_file_name = './results/pgg_original_dynamics_%s.csv' % init_type
     gamma_frac_history_pd.to_csv(csv_file_name)
-    w_history_pd.to_csv(w_csv_file_name)
     print(gamma_frac_history_pd)
-    print(w_history_pd)
 
 

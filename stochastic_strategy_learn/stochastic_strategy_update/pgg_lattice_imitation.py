@@ -48,6 +48,13 @@ def pd_donation_c_game(a_x, a_y, b, c):
         return "Error"
 
 
+# public goods game
+def pgg_game(a_l, gamma):  # r in (0, 1]
+    a_n = len(a_l)
+    p = np.array([np.sum(a_l) * gamma * a_n / a_n for _ in range(a_n)] - np.array(a_l))
+    return p
+
+
 def generate_well_mixed_network(popu_size):
     g_network = nx.complete_graph(popu_size)
     adj_array = nx.to_numpy_array(g_network)
@@ -106,7 +113,7 @@ def epsilon_time(time_step):
 
 
 class Agent:
-    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None):
+    def __init__(self, agent_id, link, contribution=1.0, alpha=None, gamma=None, epsilon=None):
         self.agent_id = agent_id
         self.link = link
         self.payoff = 0
@@ -114,6 +121,7 @@ class Agent:
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
+        self.contribution = contribution
         self.actions = gen_actions()
         self.len_a = len(self.actions)
         self.a_values = np.zeros(self.len_a)
@@ -136,6 +144,12 @@ class Agent:
 
     def get_payoff(self):
         return self.payoff
+
+    def get_contribution(self):
+        return self.contribution
+
+    def set_contribution(self, new_contribution):
+        self.contribution = new_contribution
 
     def set_payoff(self, n_payoff):
         self.payoff = n_payoff
@@ -198,8 +212,8 @@ class Agent:
 
 
 class AgentImitation(Agent):
-    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None, delta=None):
-        Agent.__init__(self, agent_id, link, alpha, gamma, epsilon)
+    def __init__(self, agent_id, link, contribution=1.0, alpha=None, gamma=None, epsilon=None, delta=None):
+        Agent.__init__(self, agent_id, link, contribution, alpha, gamma, epsilon)
         self.delta = delta
         self.delta_table = np.zeros(self.len_a)
         self.delta_top_table = np.zeros(self.len_a)
@@ -214,7 +228,6 @@ class AgentImitation(Agent):
         if np.random.binomial(1, self.epsilon) == 1:
             a = np.random.choice(self.actions)
         else:
-            print(self.strategy)
             a = np.random.choice(self.actions, size=1, p=self.strategy)[0]
         return a
 
@@ -248,7 +261,7 @@ class AgentImitation(Agent):
 def initialize_population(popu_size, adj_link):
     popu = []
     for i in range(popu_size):
-        popu.append(AgentImitation(i, adj_link[i], gamma=0.9, delta=0.0001))
+        popu.append(AgentImitation(i, adj_link[i], gamma=0.9, delta=0.0005))
     for i in range(popu_size):
         popu[i].initial_strategy()
         popu[i].initial_a_values()
@@ -258,7 +271,7 @@ def initialize_population(popu_size, adj_link):
     return popu
 
 
-def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, game_type=None):
+def imitation_process(popu, adj_link, gamma=1.0):
     total_num = len(popu)
     for i in range(total_num):
         popu[i].set_payoff(0)
@@ -266,24 +279,25 @@ def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, gam
     c_l = [0 for _ in range(total_num)]
     for i in range(total_num):
         a_l[i] = popu[i].choose_action()
-    for pair in edge:
-        ind_x = pair[0]
-        ind_y = pair[1]
-        if game_type == 'pd':
-            p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
-        elif game_type == 'pd_b':
-            p_x, p_y = pd_game_b(a_l[ind_x], a_l[ind_y], b)
-        elif game_type == 'pd_donation_c':
-            benifit = b_c * c
-            p_x, p_y = pd_donation_c_game(a_l[ind_x], a_l[ind_y], c, benifit)
+    for i in range(total_num):
+        if a_l[i] == 1:
+            c_l[i] = popu[i].get_contribution()
         else:
-            p_x = 0; p_y = 0;
-            print("wrong game type")
-        popu[ind_x].add_payoff(p_x)
-        popu[ind_y].add_payoff(p_y)
+            c_l[i] = 0
+    for i in range(total_num):
+        neigh = popu[i].get_link()
+        neigh = np.append(neigh, i)
+        a_neigh = []
+        c_neigh = []
+        for j in neigh:
+            a_neigh.append(a_l[j])
+            c_neigh.append(c_l[j])
+        p_neigh = pgg_game(c_neigh, gamma)
+        for j in range(len(neigh)):
+            popu[neigh[j]].add_payoff(p_neigh[j])
     for i in range(total_num):
         while True:
-            ind_j = random.choice(range(total_num))
+            ind_j = np.random.choice(popu[i].get_link())
             if i != ind_j:
                 break
         p_j = popu[ind_j].get_payoff()
@@ -297,32 +311,29 @@ def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, gam
     return popu
 
 
-def run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
-                          r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, game_type=None):
+def run_imitation_process(popu_size, adj_link, gamma=1.0):
     popu = initialize_population(popu_size, adj_link)
     for _ in range(run_time):
         print(_)
-        popu = imitation_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
-        for i in range(popu_size):
-            print(popu[i].get_strategy())
+        popu = imitation_process(popu, adj_link, gamma)
+        # for i in range(popu_size):
+        #     print(popu[i].get_strategy())
     for _ in range(sample_time):
-        popu = imitation_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
+        popu = imitation_process(popu, adj_link, gamma)
         for i in range(popu_size):
             print(popu[i].get_strategy())
 
 
 if __name__ == '__main__':
-    popu_size = 100
-    xdim = 10; ydim = 10
+    popu_size = 1600
+    xdim = 40; ydim = 40
     run_time = 10000
     sample_time = 200
-    r = 3; s = 0; t = 5; p = 1; b=0.8; c = 1.0; b_c = 2.4
-    adj_link, edge = generate_well_mixed_network(popu_size)
-    # adj_link, edge = generate_lattice(popu_size, xdim, ydim)
+    gamma = 1.5
+    # adj_link, edge = generate_well_mixed_network(popu_size)
+    adj_link, edge = generate_lattice(popu_size, xdim, ydim)
     # game_type = 'pd_donation_c'
-    game_type = 'pd_b'
-    run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
-                          r, s, t, p, b, c, b_c, game_type)
+    run_imitation_process(popu_size, adj_link, gamma)
 
 
 

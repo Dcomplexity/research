@@ -262,7 +262,7 @@ class AgentPHC(Agent):
 def initialize_population(popu_size, adj_link):
     popu = []
     for i in range(popu_size):
-        popu.append(AgentPHC(i, adj_link[i], gamma=0.9, delta=0.001))
+        popu.append(AgentPHC(i, adj_link[i], gamma=0.9, delta=0.0001))
     for i in range(popu_size):
         popu[i].initial_strategy()
         popu[i].initial_a_values()
@@ -325,9 +325,9 @@ if __name__ == "__main__":
     xdim = 10; ydim = 10
     run_time = 10000
     sample_time = 200
-    r = 3; s = 0; t = 5; p = 1; b = 0.9; c = 1.0; b_c = 2.4
-    # adj_link, edge = generate_well_mixed_network(popu_size)
-    adj_link, edge = generate_lattice(popu_size, xdim, ydim)
+    r = 3; s = 0; t = 5; p = 1; b = 1.0; c = 1.0; b_c = 2.4
+    adj_link, edge = generate_well_mixed_network(popu_size)
+    # adj_link, edge = generate_lattice(popu_size, xdim, ydim)
     # game_type = 'pd_donation_c'
     game_type = 'pd_b'
     run_learn_process(popu_size, adj_link, edge, run_time, sample_time,
