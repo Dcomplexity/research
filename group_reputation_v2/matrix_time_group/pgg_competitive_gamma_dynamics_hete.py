@@ -31,12 +31,9 @@ def calc_enhancement_l(m, n, c_dist, r, average=False):
             for i in range(n + 1):
                 r_temp = 0
                 for pos_j in range(m):
-                    mean_j = 0
                     if pos_i != pos_j:
                         for j in range(n + 1):
-                            #mean_j += j * c_dist[pos_j][j]
-                            r_temp += r / edge_num * m * (i/n + 0.001) / (i/n + j/n + 0.001 * 2) * c_dist[pos_j][j]
-                    #r_temp += r / edge_num * m * (i + 0.001) / (i + mean_j + 0.001 * 2)
+                            r_temp += r / edge_num * m * (i + 0.001) / (i + j + 0.001 * 2) * c_dist[pos_j][j]
                 r_l[pos_i][i] = r_temp
     return r_l
 
@@ -94,6 +91,26 @@ def calc_enhancement_w_l(m, n, c_dist, r, w):
     return r_l
 
 
+# def calc_enhancement_w_l(m, n, c_dist, r, w):
+#     r_pos_l = []
+#     r_l = np.zeros((m, n + 1))
+#     edge_num = m * (m - 1) / 2
+#     for pos_i in range(m):
+#         for i in range(n + 1):
+#             r_temp = 0
+#             for pos_j in range(m):
+#                 if pos_i != pos_j:
+#                     for j in range(n + 1):
+#                         r_temp += r / edge_num * m * (i / n + 0.001) / (i / n + j / n + 0.001 * 2) \
+#                                   * (n + 1) * c_dist[pos_j][j] * c_dist[pos_i][i]
+#             r_l[pos_i][i] = r_temp
+#     for pos in range(m):
+#         r_pos_l.append(np.dot(r_l[pos], w[pos]))
+#     r_pos_l = np.array(r_pos_l)
+#     print(np.mean(r_pos_l))
+#     return r_pos_l
+
+
 def calc_payoff(m, n, c, r_l):
     """
     calculate the payoff matrix
@@ -126,13 +143,9 @@ def t_plus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_plus_p_j = 0
             c_group_dist = c_dist[pos_j]
             for c_j in range(n + 1):
-                t_plus_p_j += ((n - c_num) / n) * (c_j / n) * c_group_dist[c_j] * (1 / m) \
+                t_plus_p_j += ((n - c_num) / n) * (c_j / n) * c_group_dist[c_j] * (1 / (m - 1)) \
                               * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][0] - payoff[pos_j][c_j][1]))))
             t_plus_p += t_plus_p_j
-        else:
-            t_plus_p_i = ((n - c_num) / n) * (c_num / n) * (1 / m) \
-                         * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][0] - payoff[pos_i][c_num][1]))))
-            t_plus_p += t_plus_p_i
     t_plus_p = (1 - mu) * t_plus_p + mu * (n - c_num) / n
     return t_plus_p
 
@@ -144,13 +157,9 @@ def t_minus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_minus_p_j = 0
             c_group_dist = c_dist[pos_j]
             for c_j in range(n + 1):
-                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / m) \
+                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / (m - 1)) \
                                * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][1] - payoff[pos_j][c_j][0]))))
             t_minus_p += t_minus_p_j
-        else:
-            t_minus_p_i = (c_num / n) * ((n - c_num) / n) * (1 / m) \
-                          * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][1] - payoff[pos_i][c_num][0]))))
-            t_minus_p += t_minus_p_i
     t_minus_p = (1 - mu) * t_minus_p + mu * c_num / n
     return t_minus_p
 
@@ -199,29 +208,40 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
     w = calc_trans_matrix(m, n, c_dist, payoff, mu)
     group_c_dist_history = []
     group_c_dist_history.append(c_dist.flatten())
+    w_history = []
+    w_history.extend(w.reshape((-1, w.shape[-1]))[0:6])
     for step in range(run_t):
         r_l = calc_enhancement_w_l(m, n, c_dist, r, w)
         payoff = calc_payoff(m, n, c, r_l)
         c_dist = dynamic_one_round(m, c_dist, w)
         w = calc_trans_matrix(m, n, c_dist, payoff, mu)
         group_c_dist_history.append(c_dist.flatten())
-    return group_c_dist_history
+        w_history.extend(w.reshape((-1, w.shape[-1]))[0:6])
+    return group_c_dist_history, w_history
 
 
 if __name__ == '__main__':
     g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
-    init_type = 'homo'
+    init_type = 'hete'
     gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
+    group_l = np.arange((run_time + 1) * (g_s + 1))
     gamma_dist_history = []
+    w_history_l = []
     for r in gamma_l:
         print(r)
-        group_c_dist_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
+        group_c_dist_history, w_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
+        w_history_l.extend(w_history)
         gamma_dist_history.extend(group_c_dist_history)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
+    w_m_index = pd.MultiIndex.from_product([gamma_l, group_l], names=['gamma', 'group'])
     gamma_frac_history_pd = pd.DataFrame(gamma_dist_history, index=m_index)
+    w_history_pd = pd.DataFrame(w_history_l, index=w_m_index)
+    w_csv_file_name = './results/pgg_competitive_gamma_dynamics_w_%s.csv' % init_type
     csv_file_name = './results/pgg_competitive_gamma_dynamics_%s.csv' % init_type
     gamma_frac_history_pd.to_csv(csv_file_name)
+    w_history_pd.to_csv(w_csv_file_name)
     print(gamma_frac_history_pd)
+    print(w_history_pd)
 
 

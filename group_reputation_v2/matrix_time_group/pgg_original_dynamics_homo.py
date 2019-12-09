@@ -55,7 +55,7 @@ def t_plus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_plus_p += t_plus_p_j
         else:
             t_plus_p_i = ((n - c_num) / n) * (c_num / n) * (1 / m) \
-                         *  (1 / (1 + math.e ** (2.0 * (payoff[c_num][0] - payoff[c_num][1]))))
+                         * (1 / (1 + math.e ** (2.0 * (payoff[c_num][0] - payoff[c_num][1]))))
             t_plus_p += t_plus_p_i
     t_plus_p = (1 - mu) * t_plus_p + mu * (n - c_num) / n
     return t_plus_p
@@ -68,13 +68,9 @@ def t_minus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_minus_p_j = 0
             c_group_dist = c_dist[pos_j]
             for c_j in range(n + 1):
-                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / m) \
+                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / (m - 1)) \
                                * (1 / (1 + math.e ** (2.0 * (payoff[c_num][1] - payoff[c_j][0]))))
             t_minus_p += t_minus_p_j
-        else:
-            t_minus_p_i = (c_num / n) * ((n - c_num) / n) * (1 / m) \
-                          * (1 / (1 + math.e ** (2.0 * (payoff[c_num][1] - payoff[c_num][0]))))
-            t_minus_p += t_minus_p_i
     t_minus_p = (1 - mu) * t_minus_p + mu * c_num / n
     return t_minus_p
 
@@ -121,12 +117,15 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
     c_dist = initialize_c_dist(m, n, init_type)
     w = calc_trans_matrix(m, n, c_dist, payoff, mu)
     group_c_dist_history = []
+    w_history = []
     for step in range(run_t):
+        w_history.extend(w.reshape((-1, w.shape[-1]))[0:6])
         group_c_dist_history.append(c_dist.flatten())
         c_dist = dynamic_one_round(m, c_dist, w)
         w = calc_trans_matrix(m, n, c_dist, payoff, mu)
     group_c_dist_history.append(c_dist.flatten())
-    return group_c_dist_history
+    w_history.extend(w.reshape((-1, w.shape[-1]))[0:6])
+    return group_c_dist_history, w_history
 
 
 if __name__ == '__main__':
@@ -134,15 +133,23 @@ if __name__ == '__main__':
     init_type = 'homo'
     gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
+    group_l = np.arange((run_time + 1) * (g_s + 1))
     gamma_dist_history = []
+    w_history_l = []
     for r in gamma_l:
         print(r)
-        group_c_dist_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
+        group_c_dist_history, w_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
+        w_history_l.extend(w_history)
         gamma_dist_history.extend(group_c_dist_history)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
+    w_m_index = pd.MultiIndex.from_product([gamma_l, group_l], names=['gamma', 'group'])
     gamma_frac_history_pd = pd.DataFrame(gamma_dist_history, index=m_index)
+    w_history_pd = pd.DataFrame(w_history_l, index=w_m_index)
+    w_csv_file_name = './results/pgg_original_dynamics_w_%s.csv' % init_type
     csv_file_name = './results/pgg_original_dynamics_%s.csv' % init_type
     gamma_frac_history_pd.to_csv(csv_file_name)
+    w_history_pd.to_csv(w_csv_file_name)
     print(gamma_frac_history_pd)
+    print(w_history_pd)
 
 
