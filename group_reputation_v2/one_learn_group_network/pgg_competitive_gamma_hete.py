@@ -77,7 +77,7 @@ def game_one_round(a_l, g_gamma_l, ind_pos, pos_ind, g_s, w, ave_gamma, mu):
             ind = random.choice(g_ind)
             while True:
                 oppon = random.choice(range(ind_n))
-                if oppon not in g_ind:
+                if oppon != ind:
                     break
             ind_p = ind_p_l[ind]
             oppon_p = ind_p_l[oppon]

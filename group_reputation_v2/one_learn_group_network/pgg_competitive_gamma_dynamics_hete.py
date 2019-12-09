@@ -143,9 +143,13 @@ def t_plus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_plus_p_j = 0
             c_group_dist = c_dist[pos_j]
             for c_j in range(n + 1):
-                t_plus_p_j += ((n - c_num) / n) * (c_j / n) * c_group_dist[c_j] * (1 / (m - 1)) \
+                t_plus_p_j += ((n - c_num) / n) * (c_j / n) * c_group_dist[c_j] * (1 / m) \
                               * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][0] - payoff[pos_j][c_j][1]))))
             t_plus_p += t_plus_p_j
+        else:
+            t_plus_p_i = ((n - c_num) / n) * (c_num / n) * (1 / m) \
+                          * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][0] - payoff[pos_i][c_num][1]))))
+            t_plus_p += t_plus_p_i
     t_plus_p = (1 - mu) * t_plus_p + mu * (n - c_num) / n
     return t_plus_p
 
@@ -157,9 +161,13 @@ def t_minus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_minus_p_j = 0
             c_group_dist = c_dist[pos_j]
             for c_j in range(n + 1):
-                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / (m - 1)) \
+                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / m) \
                                * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][1] - payoff[pos_j][c_j][0]))))
             t_minus_p += t_minus_p_j
+        else:
+            t_minus_p_i = (c_num / n) * ((n - c_num) / n) * (1 / m) \
+                          * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][1] - payoff[pos_i][c_num][0]))))
+            t_minus_p += t_minus_p_i
     t_minus_p = (1 - mu) * t_minus_p + mu * c_num / n
     return t_minus_p
 

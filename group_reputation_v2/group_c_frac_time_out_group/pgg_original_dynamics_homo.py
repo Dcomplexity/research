@@ -36,7 +36,7 @@ def initialize_c_dist(m, n, init_type = 'homo'):
     if init_type == 'homo':
         ind_c_p = [0.5 for _ in range(m)]
     elif init_type == 'hete':
-        ind_c_p = [(_ + 0.001) / m for _ in range(m)]
+        ind_c_p = [_ / m for _ in range(m)]
     for pos in range(m):
         for i in range(n + 1):
             c_dist[pos][i] = binom.pmf(i, n, ind_c_p[pos])
@@ -50,13 +50,9 @@ def t_plus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_plus_p_j = 0
             c_group_dist = c_dist[pos_j]
             for c_j in range(n + 1):
-                t_plus_p_j += ((n - c_num) / n) * (c_j / n) * c_group_dist[c_j] * (1 / m) \
+                t_plus_p_j += ((n - c_num) / n) * (c_j / n) * c_group_dist[c_j] * (1 / (m - 1)) \
                               * (1 / (1 + math.e ** (2.0 * (payoff[c_num][0] - payoff[c_j][1]))))
             t_plus_p += t_plus_p_j
-        else:
-            t_plus_p_i = ((n - c_num) / n) * (c_num / n) * (1 / m) \
-                         * (1 / (1 + math.e ** (2.0 * (payoff[c_num][0] - payoff[c_num][1]))))
-            t_plus_p += t_plus_p_i
     t_plus_p = (1 - mu) * t_plus_p + mu * (n - c_num) / n
     return t_plus_p
 
@@ -68,13 +64,9 @@ def t_minus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_minus_p_j = 0
             c_group_dist = c_dist[pos_j]
             for c_j in range(n + 1):
-                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / m) \
+                t_minus_p_j += (c_num / n) * ((n - c_j) / n) * c_group_dist[c_j] * (1 / (m - 1)) \
                                * (1 / (1 + math.e ** (2.0 * (payoff[c_num][1] - payoff[c_j][0]))))
             t_minus_p += t_minus_p_j
-        else:
-            t_minus_p_i = (c_num / n) * ((n - c_num) / n) * (1 / m) \
-                          * (1 / (1 + math.e ** (2.0 * (payoff[c_num][1] - payoff[c_num][0]))))
-            t_minus_p += t_minus_p_i
     t_minus_p = (1 - mu) * t_minus_p + mu * c_num / n
     return t_minus_p
 
@@ -120,27 +112,27 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
     payoff = calc_payoff(n, c, r)
     c_dist = initialize_c_dist(m, n, init_type)
     w = calc_trans_matrix(m, n, c_dist, payoff, mu)
-    group_c_frac_history = []
+    group_c_dist_history = []
     for step in range(run_t):
-        group_c_frac_history.append(np.copy(calc_group_frac(m, n, c_dist)))
+        group_c_dist_history.append(c_dist.flatten())
         c_dist = dynamic_one_round(m, c_dist, w)
         w = calc_trans_matrix(m, n, c_dist, payoff, mu)
-    group_c_frac_history.append(np.copy(calc_group_frac(m, n, c_dist)))
-    return group_c_frac_history
+    group_c_dist_history.append(c_dist.flatten())
+    return group_c_dist_history
 
 
 if __name__ == '__main__':
     g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
-    init_type = 'hete'
+    init_type = 'homo'
     gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
-    gamma_frac_history = []
+    gamma_dist_history = []
     for r in gamma_l:
         print(r)
-        group_c_frac_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
-        gamma_frac_history.extend(group_c_frac_history)
+        group_c_dist_history = dynamic_process(g_n, g_s, c, r, mu, run_time, init_type)
+        gamma_dist_history.extend(group_c_dist_history)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
-    gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
+    gamma_frac_history_pd = pd.DataFrame(gamma_dist_history, index=m_index)
     csv_file_name = './results/pgg_original_dynamics_%s.csv' % init_type
     gamma_frac_history_pd.to_csv(csv_file_name)
     print(gamma_frac_history_pd)

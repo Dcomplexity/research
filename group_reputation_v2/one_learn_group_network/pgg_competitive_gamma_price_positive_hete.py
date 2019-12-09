@@ -123,9 +123,10 @@ def game_one_round(a_l, g_gamma_l, ind_pos, pos_ind, g_s, w, ave_gamma, mu, adj_
             g_ind = pos_ind[pos]
             ind = random.choice(g_ind)
             potential_pos = adj_link[pos]
-            oppon_pos = random.choice(potential_pos)
-            oppon_ind = pos_ind[oppon_pos]
+            potential_pos = np.append(potential_pos, pos)
             while True:
+                oppon_pos = random.choice(potential_pos)
+                oppon_ind = pos_ind[oppon_pos]
                 oppon = random.choice(oppon_ind)
                 if oppon != ind:
                     break
