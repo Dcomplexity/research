@@ -1,5 +1,6 @@
 import numpy as np
 import networkx as nx
+import pandas as pd
 import math
 import random
 from itertools import permutations
@@ -214,7 +215,6 @@ class AgentImitation(Agent):
         if np.random.binomial(1, self.epsilon) == 1:
             a = np.random.choice(self.actions)
         else:
-            print(self.strategy)
             a = np.random.choice(self.actions, size=1, p=self.strategy)[0]
         return a
 
@@ -301,15 +301,14 @@ def run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
                           r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, game_type=None):
     popu = initialize_population(popu_size, adj_link)
     for _ in range(run_time):
-        print(_)
         popu = imitation_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
-        for i in range(popu_size):
-            print(popu[i].get_strategy())
+    sample_strategy = []
     for _ in range(sample_time):
         popu = imitation_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
         for i in range(popu_size):
-            print(popu[i].get_strategy())
-
+            sample_strategy.append(popu[i].get_strategy())
+    sample_strategy = np.mean(sample_strategy, axis=0)
+    return sample_strategy
 
 if __name__ == '__main__':
     popu_size = 100
@@ -321,8 +320,17 @@ if __name__ == '__main__':
     # adj_link, edge = generate_lattice(popu_size, xdim, ydim)
     # game_type = 'pd_donation_c'
     game_type = 'pd_b'
-    run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
+    result = []
+    b_l = np.round(np.arange(0.0, 2.0, 0.1), 2)
+    for b in b_l:
+        print(b)
+        one_result = run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
                           r, s, t, p, b, c, b_c, game_type)
+        result.append(one_result)
+    result_pd = pd.DataFrame(result, index=b_l)
+    result_file = './results/pdd_well_mixed_imitation.csv'
+    result_pd.to_csv(result_file)
+    print(result_pd)
 
 
 
