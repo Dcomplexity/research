@@ -34,7 +34,7 @@ def pd_game_b(a_x, a_y, b):
 
 
 # Create donation game
-def pd_donation_c_game(a_x, a_y, b, c):
+def pd_donation_c_game(a_x, a_y, c, b):
     if a_x == 1 and a_y == 1:
         return b-c, b-c
     elif a_x == 1 and a_y == 0:

@@ -287,7 +287,7 @@ def learn_process(popu, edge, r=3.0, s=0.0, t=5.0, p=1.0, b=1.0, c=1.0, b_c=1.0,
             p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
         elif game_type == 'pd_b':
             p_x, p_y = pd_game_b(a_l[ind_x], a_l[ind_y], b)
-        elif game_type == 'pd_donation_c':
+        elif game_type == 'donation_c':
             benefit = b_c * c
             p_x, p_y = pd_donation_c_game(a_l[ind_x], a_l[ind_y], c, benefit)
         else:
@@ -328,7 +328,7 @@ if __name__ == "__main__":
     adj_link, edge = generate_well_mixed_network(popu_size)
     # adj_link, edge = generate_lattice(popu_size, xdim, ydim)
     # game_type = 'pd_donation_c'
-    game_type = 'pd_b'
+    game_type = 'donation_c'
     result = []
     b_l = np.round(np.arange(0.0, 2.0, 0.1), 2)
     for b in b_l:
@@ -337,7 +337,7 @@ if __name__ == "__main__":
                       r, s, t, p, b, c, b_c, game_type)
         result.append(one_result)
     result_pd = pd.DataFrame(result, index=b_l)
-    result_file = './results/pdd_well_mixed_phc.csv'
+    result_file = './results/donation_well_mixed_phc.csv'
     result_pd.to_csv(result_file)
     print(result_pd)
 

@@ -110,6 +110,7 @@ class Agent:
         self.link = link
         self.payoff = 0
         self.time_step = 0
+        self.state_count = 0.0
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -259,10 +260,48 @@ class AgentPHC(Agent):
                 self.strategy[i] = 0.0
 
 
+class AgentWolfPHC(AgentPHC):
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None, delta=None):
+        AgentPHC.__init__(self, agent_id, link, alpha, gamma, epsilon, delta)
+        self.state_count = 0.0
+        self.ave_strategy = np.zeros(self.len_a)
+        for i in self.actions:
+            self.ave_strategy[i] = 1.0 / self.len_a
+        self.delta_win = 0.0
+        self.delta_lose = 0.0
+
+    def update_strategy(self):
+        self.state_count += 1.0
+        self.delta_win = 1.0 / (10000 + self.time_step)
+        self.delta_lose = 2.0 * self.delta_win
+        for a_i in self.actions:
+            self.ave_strategy[a_i] += (1.0 / self.state_count) * (self.strategy[a_i] - self.ave_strategy[a_i])
+        sum_act_value = 0.0
+        sum_ave_act_value = 0.0
+        for a_i in self.actions:
+            sum_act_value += self.strategy[a_i] * self.a_values[a_i]
+            sum_ave_act_value += self.ave_strategy[a_i] * self.a_values[a_i]
+        if sum_act_value > sum_ave_act_value:
+            self.delta = self.delta_win
+        else:
+            self.delta = self.delta_lose
+
+        max_a = np.random.choice(np.argwhere(self.a_values == np.amax(self.a_values))[0])
+        for i in range(self.len_a):
+            self.delta_table[i] = min(np.array([self.strategy[i], self.delta / (self.len_a - 1)]))
+        sum_delta = 0
+        for act_i in [act_j for act_j in self.actions if act_j != max_a]:
+            self.delta_top_table[act_i] = -self.delta_table[act_i]
+            sum_delta += self.delta_table[act_i]
+        self.delta_top_table[max_a] = sum_delta
+        for i in range(self.len_a):
+            self.strategy[i] += self.delta_top_table[i]
+
+
 def initialize_population(popu_size, adj_link):
     popu = []
     for i in range(popu_size):
-        popu.append(AgentPHC(i, adj_link[i], gamma=0.9, delta=0.0001))
+        popu.append(AgentWolfPHC(i, adj_link[i], gamma=0.9, delta=0.0001))
     for i in range(popu_size):
         popu[i].initial_strategy()
         popu[i].initial_a_values()
@@ -287,7 +326,7 @@ def learn_process(popu, edge, r=3.0, s=0.0, t=5.0, p=1.0, b=1.0, c=1.0, b_c=1.0,
             p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
         elif game_type == 'pd_b':
             p_x, p_y = pd_game_b(a_l[ind_x], a_l[ind_y], b)
-        elif game_type == 'pd_donation_c':
+        elif game_type == 'donation_c':
             benefit = b_c * c
             p_x, p_y = pd_donation_c_game(a_l[ind_x], a_l[ind_y], c, benefit)
         else:
@@ -318,17 +357,16 @@ def run_learn_process(popu_size, adj_link, edge, run_time, sample_time,
     sample_strategy = np.mean(sample_strategy, axis=0)
     return sample_strategy
 
-
 if __name__ == "__main__":
     popu_size = 100
     xdim = 10; ydim = 10
     run_time = 10000
     sample_time = 200
-    r = 3; s = 0; t = 5; p = 1; b = 0.5; c = 1.0; b_c = 2.4
+    r = 3; s = 0; t = 5; p = 1; b = 1.5; c = 1.0; b_c = 2.4
     adj_link, edge = generate_well_mixed_network(popu_size)
     # adj_link, edge = generate_lattice(popu_size, xdim, ydim)
     # game_type = 'pd_donation_c'
-    game_type = 'pd_b'
+    game_type = 'donation_c'
     result = []
     b_l = np.round(np.arange(0.0, 2.0, 0.1), 2)
     for b in b_l:
@@ -337,7 +375,8 @@ if __name__ == "__main__":
                       r, s, t, p, b, c, b_c, game_type)
         result.append(one_result)
     result_pd = pd.DataFrame(result, index=b_l)
-    result_file = './results/pdd_well_mixed_phc.csv'
+    result_file = './results/donation_well_mixed_wolf_phc.csv'
     result_pd.to_csv(result_file)
     print(result_pd)
+
 
