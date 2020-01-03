@@ -1,8 +1,6 @@
 import numpy as np
 import networkx as nx
 import pandas as pd
-import math
-import random
 from itertools import permutations
 
 
@@ -112,6 +110,7 @@ class Agent:
         self.link = link
         self.payoff = 0
         self.time_step = 0
+        self.state_count = 0.0
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -198,7 +197,31 @@ class Agent:
         self.epsilon = 0.5 / (1 + 0.0001 * self.time_step)
 
 
-class AgentImitation(Agent):
+class AgentFixedStrategy(Agent):
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None, fixed_strategy=None):
+        Agent.__init__(self, agent_id, link, alpha, gamma, epsilon)
+        self.fixed_strategy = fixed_strategy
+
+    def initial_strategy(self):
+        self.strategy = self.fixed_strategy
+
+    def choose_action(self):
+        a = np.random.choice(self.actions, size=1, p=self.strategy)[0]
+        return a
+
+
+class AgentQ(Agent):
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None):
+        Agent.__init__(self, agent_id, link, alpha, gamma, epsilon)
+
+    def choose_action(self):
+        a_v = np.array(self.a_values)
+        alt_actions = np.where(a_v == np.amax(a_v))[0]
+        a = np.random.choice(alt_actions)
+        return a
+
+
+class AgentPHC(Agent):
     def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None, delta=None):
         Agent.__init__(self, agent_id, link, alpha, gamma, epsilon)
         self.delta = delta
@@ -210,7 +233,6 @@ class AgentImitation(Agent):
         Choose action epsilon-greedy
         :return:
         action: the chosen action
-        :return:
         """
         if np.random.binomial(1, self.epsilon) == 1:
             a = np.random.choice(self.actions)
@@ -218,24 +240,17 @@ class AgentImitation(Agent):
             a = np.random.choice(self.actions, size=1, p=self.strategy)[0]
         return a
 
-    def imitation_strategy(self, p_j, a_i, a_j):
+    def update_strategy(self):
+        max_a = np.random.choice(np.argwhere(self.a_values == np.amax(self.a_values))[0])
         for i in range(self.len_a):
             self.delta_table[i] = min(np.array([self.strategy[i], self.delta / (self.len_a - 1)]))
         sum_delta = 0
-        if random.random() < 1 / (1 + math.e ** (2 * (self.payoff - p_j))):
-            for act_i in [act_j for act_j in self.actions if act_j != a_j]:
-                self.delta_top_table[act_i] = -self.delta_table[act_i]
-                sum_delta += self.delta_table[act_i]
-            self.delta_top_table[a_j] = sum_delta
-            for i in range(self.len_a):
-                self.strategy[i] += self.delta_top_table[i]
-        # else:
-        #     for act_i in [act_j for act_j in self.actions if act_j != a_i]:
-        #         self.delta_top_table[act_i] = -self.delta_table[act_i]
-        #         sum_delta += self.delta_table[act_i]
-        #     self.delta_top_table[a_i] = sum_delta
-        #     for i in range(self.len_a):
-        #         self.strategy[i] += self.delta_top_table[i]
+        for act_i in [act_j for act_j in self.actions if act_j != max_a]:
+            self.delta_top_table[act_i] = -self.delta_table[act_i]
+            sum_delta += self.delta_table[act_i]
+        self.delta_top_table[max_a] = sum_delta
+        for i in range(self.len_a):
+            self.strategy[i] += self.delta_top_table[i]
 
     def valid_strategy(self):
         for i in range(self.len_a):
@@ -245,20 +260,58 @@ class AgentImitation(Agent):
                 self.strategy[i] = 0.0
 
 
+class AgentWolfPHC(AgentPHC):
+    def __init__(self, agent_id, link, alpha=None, gamma=None, epsilon=None, delta=None):
+        AgentPHC.__init__(self, agent_id, link, alpha, gamma, epsilon, delta)
+        self.state_count = 0.0
+        self.ave_strategy = np.zeros(self.len_a)
+        for i in self.actions:
+            self.ave_strategy[i] = 1.0 / self.len_a
+        self.delta_win = 0.0
+        self.delta_lose = 0.0
+
+    def update_strategy(self):
+        self.state_count += 1.0
+        self.delta_win = 1.0 / (10000 + self.time_step)
+        self.delta_lose = 2.0 * self.delta_win
+        for a_i in self.actions:
+            self.ave_strategy[a_i] += (1.0 / self.state_count) * (self.strategy[a_i] - self.ave_strategy[a_i])
+        sum_act_value = 0.0
+        sum_ave_act_value = 0.0
+        for a_i in self.actions:
+            sum_act_value += self.strategy[a_i] * self.a_values[a_i]
+            sum_ave_act_value += self.ave_strategy[a_i] * self.a_values[a_i]
+        if sum_act_value > sum_ave_act_value:
+            self.delta = self.delta_win
+        else:
+            self.delta = self.delta_lose
+
+        max_a = np.random.choice(np.argwhere(self.a_values == np.amax(self.a_values))[0])
+        for i in range(self.len_a):
+            self.delta_table[i] = min(np.array([self.strategy[i], self.delta / (self.len_a - 1)]))
+        sum_delta = 0
+        for act_i in [act_j for act_j in self.actions if act_j != max_a]:
+            self.delta_top_table[act_i] = -self.delta_table[act_i]
+            sum_delta += self.delta_table[act_i]
+        self.delta_top_table[max_a] = sum_delta
+        for i in range(self.len_a):
+            self.strategy[i] += self.delta_top_table[i]
+
+
 def initialize_population(popu_size, adj_link):
     popu = []
     for i in range(popu_size):
-        popu.append(AgentImitation(i, adj_link[i], gamma=0.9, delta=0.0001))
+        popu.append(AgentWolfPHC(i, adj_link[i], gamma=0.9, delta=0.0001))
     for i in range(popu_size):
         popu[i].initial_strategy()
         popu[i].initial_a_values()
-        popu[i].set_time_step(t=0)
+        popu[i].set_time_step(t = 0)
         popu[i].set_alpha(t=0)
         popu[i].set_epsilon(t=0)
     return popu
 
 
-def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, game_type=None):
+def learn_process(popu, edge, r=3.0, s=0.0, t=5.0, p=1.0, b=1.0, c=1.0, b_c=1.0, game_type=None):
     total_num = len(popu)
     for i in range(total_num):
         popu[i].set_payoff(0)
@@ -273,23 +326,17 @@ def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, gam
             p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
         elif game_type == 'pd_b':
             p_x, p_y = pd_game_b(a_l[ind_x], a_l[ind_y], b)
-        elif game_type == 'pd_donation_c':
-            benifit = b_c * c
-            p_x, p_y = pd_donation_c_game(a_l[ind_x], a_l[ind_y], c, benifit)
+        elif game_type == 'donation_c':
+            benefit = b_c * c
+            p_x, p_y = pd_donation_c_game(a_l[ind_x], a_l[ind_y], c, benefit)
         else:
             p_x = 0; p_y = 0
             print("wrong game type")
         popu[ind_x].add_payoff(p_x)
         popu[ind_y].add_payoff(p_y)
     for i in range(total_num):
-        while True:
-            ind_j = random.choice(popu[i].get_link())
-            if i != ind_j:
-                break
-        p_j = popu[ind_j].get_payoff()
-        a_i = a_l[i]
-        a_j = a_l[ind_j]
-        popu[i].imitation_strategy(p_j, a_i, a_j)
+        popu[i].update_a_values(a_l[i])
+        popu[i].update_strategy()
         popu[i].valid_strategy()
         popu[i].update_time_step()
         popu[i].update_alpha()
@@ -297,41 +344,39 @@ def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, gam
     return popu
 
 
-def run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
-                          r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, game_type=None):
+def run_learn_process(popu_size, adj_link, edge, run_time, sample_time,
+                      r=3.0, s=0.0, t=5.0, p=1.0, b=1.0, c=1.0, b_c=1.0, game_type=None):
     popu = initialize_population(popu_size, adj_link)
     for _ in range(run_time):
-        popu = imitation_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
+        popu = learn_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
     sample_strategy = []
     for _ in range(sample_time):
-        popu = imitation_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
+        popu = learn_process(popu, edge, r, s, t, p, b, c, b_c, game_type)
         for i in range(popu_size):
             sample_strategy.append(popu[i].get_strategy())
     sample_strategy = np.mean(sample_strategy, axis=0)
     return sample_strategy
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     popu_size = 100
     xdim = 10; ydim = 10
-    run_time = 20000
+    run_time = 10000
     sample_time = 200
-    r = 3; s = 0; t = 5; p = 1; b=0.8; c = 1.0; b_c = 2.4
+    r = 3; s = 0; t = 5; p = 1; b = 1.5; c = 1.0; b_c = 2.4
     # adj_link, edge = generate_well_mixed_network(popu_size)
     adj_link, edge = generate_lattice(popu_size, xdim, ydim)
     # game_type = 'pd_donation_c'
-    game_type = 'pd_b'
+    game_type = 'donation_c'
     result = []
     b_l = np.round(np.arange(0.0, 2.0, 0.1), 2)
     for b in b_l:
         print(b)
-        one_result = run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
-                          r, s, t, p, b, c, b_c, game_type)
+        one_result = run_learn_process(popu_size, adj_link, edge, run_time, sample_time,
+                      r, s, t, p, b, c, b_c, game_type)
         result.append(one_result)
     result_pd = pd.DataFrame(result, index=b_l)
-    result_file = './results/pdd_lattice_imitation.csv'
+    result_file = './results/donation_lattice_wolf_phc.csv'
     result_pd.to_csv(result_file)
     print(result_pd)
-
-
 
 

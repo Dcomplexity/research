@@ -36,7 +36,7 @@ def pd_game_b(a_x, a_y, b):
 
 
 # Create donation game
-def pd_donation_c_game(a_x, a_y, c, b):
+def donation_c_game(a_x, a_y, c, b):
     if a_x == 1 and a_y == 1:
         return b-c, b-c
     elif a_x == 1 and a_y == 0:
@@ -229,13 +229,13 @@ class AgentImitation(Agent):
             self.delta_top_table[a_j] = sum_delta
             for i in range(self.len_a):
                 self.strategy[i] += self.delta_top_table[i]
-        # else:
-        #     for act_i in [act_j for act_j in self.actions if act_j != a_i]:
-        #         self.delta_top_table[act_i] = -self.delta_table[act_i]
-        #         sum_delta += self.delta_table[act_i]
-        #     self.delta_top_table[a_i] = sum_delta
-        #     for i in range(self.len_a):
-        #         self.strategy[i] += self.delta_top_table[i]
+        else:
+            for act_i in [act_j for act_j in self.actions if act_j != a_i]:
+                self.delta_top_table[act_i] = -self.delta_table[act_i]
+                sum_delta += self.delta_table[act_i]
+            self.delta_top_table[a_i] = sum_delta
+            for i in range(self.len_a):
+                self.strategy[i] += self.delta_top_table[i]
 
     def valid_strategy(self):
         for i in range(self.len_a):
@@ -273,11 +273,11 @@ def imitation_process(popu, edge, r=3, s=0, t=5, p=1, b=1.0, c=1.0, b_c=1.0, gam
             p_x, p_y = pd_game(a_l[ind_x], a_l[ind_y], r, s, t, p)
         elif game_type == 'pd_b':
             p_x, p_y = pd_game_b(a_l[ind_x], a_l[ind_y], b)
-        elif game_type == 'pd_donation_c':
+        elif game_type == 'donation_c':
             benifit = b_c * c
-            p_x, p_y = pd_donation_c_game(a_l[ind_x], a_l[ind_y], c, benifit)
+            p_x, p_y = donation_c_game(a_l[ind_x], a_l[ind_y], c, benifit)
         else:
-            p_x = 0; p_y = 0
+            p_x = 0; p_y = 0;
             print("wrong game type")
         popu[ind_x].add_payoff(p_x)
         popu[ind_y].add_payoff(p_y)
@@ -313,13 +313,13 @@ def run_imitation_process(popu_size, adj_link, edge, run_time, sample_time,
 if __name__ == '__main__':
     popu_size = 100
     xdim = 10; ydim = 10
-    run_time = 20000
+    run_time = 10000
     sample_time = 200
     r = 3; s = 0; t = 5; p = 1; b=0.8; c = 1.0; b_c = 2.4
     # adj_link, edge = generate_well_mixed_network(popu_size)
     adj_link, edge = generate_lattice(popu_size, xdim, ydim)
     # game_type = 'pd_donation_c'
-    game_type = 'pd_b'
+    game_type = 'donation_c'
     result = []
     b_l = np.round(np.arange(0.0, 2.0, 0.1), 2)
     for b in b_l:
@@ -328,7 +328,7 @@ if __name__ == '__main__':
                           r, s, t, p, b, c, b_c, game_type)
         result.append(one_result)
     result_pd = pd.DataFrame(result, index=b_l)
-    result_file = './results/pdd_lattice_imitation.csv'
+    result_file = './results/donation_lattice_imitation.csv'
     result_pd.to_csv(result_file)
     print(result_pd)
 

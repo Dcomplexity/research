@@ -229,13 +229,13 @@ class AgentImitation(Agent):
             self.delta_top_table[a_j] = sum_delta
             for i in range(self.len_a):
                 self.strategy[i] += self.delta_top_table[i]
-        # else:
-        #     for act_i in [act_j for act_j in self.actions if act_j != a_i]:
-        #         self.delta_top_table[act_i] = -self.delta_table[act_i]
-        #         sum_delta += self.delta_table[act_i]
-        #     self.delta_top_table[a_i] = sum_delta
-        #     for i in range(self.len_a):
-        #         self.strategy[i] += self.delta_top_table[i]
+        else:
+            for act_i in [act_j for act_j in self.actions if act_j != a_i]:
+                self.delta_top_table[act_i] = -self.delta_table[act_i]
+                sum_delta += self.delta_table[act_i]
+            self.delta_top_table[a_i] = sum_delta
+            for i in range(self.len_a):
+                self.strategy[i] += self.delta_top_table[i]
 
     def valid_strategy(self):
         for i in range(self.len_a):
@@ -328,7 +328,7 @@ if __name__ == '__main__':
                           r, s, t, p, b, c, b_c, game_type)
         result.append(one_result)
     result_pd = pd.DataFrame(result, index=b_l)
-    result_file = './results/pdd_lattice_imitation.csv'
+    result_file = './results/pdd_lattice_imitation_self_update.csv'
     result_pd.to_csv(result_file)
     print(result_pd)
 
