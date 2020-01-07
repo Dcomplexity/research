@@ -280,9 +280,9 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type, adj_matrix):
 
 
 if __name__ == '__main__':
-    g_n = 20; g_s = 10; c = 1.0; mu = 0.01; run_time = 1000; init_time = 300
+    g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 2000; init_time = 100
     init_type = 'homo'
-    gamma_l = np.round(np.arange(0.1, 2.01, 0.05), 2)
+    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
     for r_value in [2, 2.2, 2.5, 3, 5]:
         print(r_value)
@@ -300,7 +300,7 @@ if __name__ == '__main__':
             gamma_frac_history.extend(group_c_frac_history)
         m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
         gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-        csv_file_name = './results/pgg_competitive_gamma_dynamics_price_%.1f.csv' % r_value
+        csv_file_name = './results/long_time_pgg_competitive_gamma_dynamics_price_%.1f.csv' % r_value
         gamma_frac_history_pd.to_csv(csv_file_name)
         print(gamma_frac_history_pd)
 

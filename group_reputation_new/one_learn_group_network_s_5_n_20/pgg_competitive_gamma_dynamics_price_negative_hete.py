@@ -58,7 +58,9 @@ def initialize_c_dist(m, n, init_type = 'homo'):
     c_dist = np.zeros((m, n + 1))
     if init_type == 'homo':
         ind_c_p = [0.5 for _ in range(m)]
-    elif init_type == 'hete':
+    elif init_type == 'positive_hete':
+        ind_c_p = [(m - 1 - _ + 0.001) / m for _ in range(m)]
+    elif init_type == 'negative_hete':
         ind_c_p = [(_ + 0.001) / m for _ in range(m)]
     for pos in range(m):
         for i in range(n + 1):
@@ -200,7 +202,7 @@ def t_plus(pos_i, c_num, m, n, c_dist, payoff, mu, adj_matrix):
             t_plus_p += t_plus_p_j
         else:
             t_plus_p_i = ((n - c_num) / n) * (c_num / n) * (1 / neigh_num) \
-                          * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][0] - payoff[pos_i][c_num][1]))))
+                         *  (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][0] - payoff[pos_i][c_num][1]))))
             t_plus_p += t_plus_p_i
     t_plus_p = (1 - mu) * t_plus_p + mu * (n - c_num) / n
     return t_plus_p
@@ -280,9 +282,9 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type, adj_matrix):
 
 
 if __name__ == '__main__':
-    g_n = 20; g_s = 10; c = 1.0; mu = 0.01; run_time = 1000; init_time = 300
-    init_type = 'homo'
-    gamma_l = np.round(np.arange(0.1, 2.01, 0.05), 2)
+    g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000; init_time = 100
+    init_type = 'negative_hete'
+    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
     for r_value in [2, 2.2, 2.5, 3, 5]:
         print(r_value)
@@ -300,7 +302,7 @@ if __name__ == '__main__':
             gamma_frac_history.extend(group_c_frac_history)
         m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
         gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-        csv_file_name = './results/pgg_competitive_gamma_dynamics_price_%.1f.csv' % r_value
+        csv_file_name = './results/pgg_competitive_gamma_dynamics_price_%s_%.1f.csv' % (init_type, r_value)
         gamma_frac_history_pd.to_csv(csv_file_name)
         print(gamma_frac_history_pd)
 
