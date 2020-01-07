@@ -280,9 +280,9 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type, adj_matrix):
 
 
 if __name__ == '__main__':
-    g_n = 10; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000; init_time = 300
+    g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000; init_time = 100
     init_type = 'homo'
-    gamma_l = np.round(np.arange(0.1, 2.01, 0.05), 2)
+    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
     for r_value in [2, 2.2, 2.5, 3, 5]:
         print(r_value)

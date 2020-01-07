@@ -82,8 +82,10 @@ def initialize_c_dist(m, n, init_type = 'homo'):
     c_dist = np.zeros((m, n + 1))
     if init_type == 'homo':
         ind_c_p = [0.5 for _ in range(m)]
-    elif init_type == 'hete':
-        ind_c_p = [_ / m for _ in range(m)]
+    elif init_type == 'positive_hete':
+        ind_c_p = [(m - 1 - _ + 0.001) / m for _ in range(m)]
+    elif init_type == 'negative_hete':
+        ind_c_p = [(_ + 0.001) / m for _ in range(m)]
     for pos in range(m):
         for i in range(n + 1):
             c_dist[pos][i] = binom.pmf(i, n, ind_c_p[pos])
@@ -124,7 +126,7 @@ def t_minus(pos_i, c_num, m, n, c_dist, payoff, mu, adj_matrix):
             t_minus_p += t_minus_p_j
         else:
             t_minus_p_i = (c_num / n) * ((n - c_num) / n) * (1 / neigh_num) \
-                         * (1 / (1 + math.e ** (2.0 * (payoff[c_num][1] - payoff[c_num][0]))))
+                          * (1 / (1 + math.e ** (2.0 * (payoff[c_num][1] - payoff[c_num][0]))))
             t_minus_p += t_minus_p_i
     t_minus_p = (1 - mu) * t_minus_p + mu * c_num / n
     return t_minus_p
@@ -181,9 +183,9 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type, adj_matrix):
 
 
 if __name__ == '__main__':
-    g_n = 10; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000; init_time = 300
-    init_type = 'homo'
-    gamma_l = np.round(np.arange(0.1, 2.01, 0.05), 2)
+    g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000; init_time = 100
+    init_type = 'negative_hete'
+    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
     for r_value in [2, 2.2, 2.5, 3, 5]:
         print(r_value)
@@ -200,7 +202,7 @@ if __name__ == '__main__':
             gamma_frac_history.extend(group_c_frac_history)
         m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
         gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-        csv_file_name = './results/pgg_original_dynamics_price_%.1f.csv' % r_value
+        csv_file_name = './results/pgg_original_dynamics_price_%s_%.1f.csv' % (init_type, r_value)
         gamma_frac_history_pd.to_csv(csv_file_name)
         print(gamma_frac_history_pd)
 

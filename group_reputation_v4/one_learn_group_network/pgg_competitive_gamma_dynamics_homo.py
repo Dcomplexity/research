@@ -209,9 +209,9 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
 
 
 if __name__ == '__main__':
-    g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
+    g_n = 10; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
     init_type = 'homo'
-    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
+    gamma_l = np.round(np.arange(0.1, 2.01, 0.05), 2)
     step_l = np.arange(run_time + 1)
     gamma_frac_history = []
     for r in gamma_l:

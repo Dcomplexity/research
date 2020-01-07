@@ -118,19 +118,19 @@ def run_game(f_0, init_time, run_time, ave_gamma, ind_pos, pos_ind, g_s, w, mu):
 
 
 if __name__ == '__main__':
-    g_s = 5; g_n = 10; w = 1.0; run_time = 1000; init_time = 300
+    g_s = 5; g_n = 30; w = 1.0; run_time = 1000; init_time = 100
     c = 1.0; mu = 0.01
     ind_pos, pos_ind = build_structure(g_s, g_n)
-    gamma_l = np.round(np.arange(0.1, 2.01, 0.05), 2)
+    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
     gamma_frac_history = []
     for ave_gamma in gamma_l:
         print(ave_gamma)
         # f_0 = np.random.random(g_n)
-        f_0 = [(_ + 0.001) / g_n for _ in range(g_n)]
+        f_0 = [0.5 for _ in range(g_n)]
         history_sim_r = run_game(f_0, init_time, run_time, ave_gamma, ind_pos, pos_ind, g_s, w, mu)
         gamma_frac_history.extend(history_sim_r)
     m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
     gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    gamma_frac_history_pd.to_csv('./results/pgg_competitive_gamma_hete.csv')
+    gamma_frac_history_pd.to_csv('./results/pgg_competitive_gamma_homo.csv')
     print(gamma_frac_history_pd)
