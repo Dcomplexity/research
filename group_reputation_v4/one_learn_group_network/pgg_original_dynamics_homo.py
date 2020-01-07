@@ -36,7 +36,7 @@ def initialize_c_dist(m, n, init_type = 'homo'):
     if init_type == 'homo':
         ind_c_p = [0.5 for _ in range(m)]
     elif init_type == 'hete':
-        ind_c_p = [(_ + 0.001) / m for _ in range(m)]
+        ind_c_p = [_ / m for _ in range(m)]
     for pos in range(m):
         for i in range(n + 1):
             c_dist[pos][i] = binom.pmf(i, n, ind_c_p[pos])
@@ -130,9 +130,9 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
 
 
 if __name__ == '__main__':
-    g_n = 10; g_s = 10; c = 1.0; mu = 0.01; run_time = 1000
-    init_type = 'hete'
-    gamma_l = np.round(np.arange(0.1, 2.51, 0.05), 2)
+    g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
+    init_type = 'homo'
+    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
     gamma_frac_history = []
     for r in gamma_l:

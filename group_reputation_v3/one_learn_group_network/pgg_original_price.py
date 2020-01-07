@@ -152,11 +152,11 @@ def run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu):
 
 
 if __name__ == '__main__':
-    g_s = 5; g_n = 30; w = 1.0; run_time = 1000; init_time = 100
+    g_s = 10; g_n = 10; w = 1.0; run_time = 1000; init_time = 500
     c = 1.0; mu = 0.01
     # gamma = 0.5; r = gamma * g_s
     ind_pos, pos_ind = build_structure(g_s, g_n)
-    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
+    gamma_l = np.round(np.arange(0.1, 2.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
     for r_value in [2, 2.2, 2.5, 3, 5]:
         print(r_value)

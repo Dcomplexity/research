@@ -3,11 +3,60 @@ import pandas as pd
 import random
 import math
 import matplotlib.pyplot as plt
+import networkx as nx
+import datetime
+
 
 def pgg_game(a_l, gamma):  # r in (0, 1]
     a_n = len(a_l)
     p = np.array([np.sum(a_l) * gamma * a_n / a_n for _ in range(a_n)]) - np.array(a_l)
     return p
+
+
+def price_model(n, m, r):
+    p = 1 / (r - 1)
+    G = nx.Graph()
+    t0 = 3
+    all_node = np.arange(n)
+    node_array = []
+    for i in range(t0):
+        for j in range(t0):
+            if i != j:
+                G.add_edge(i, j)
+                node_array.append(j)
+    for t in range(t0, n):
+        to_link_list = []
+        m_flag = 0
+        while m_flag < m:
+            if random.random() < p:
+                to_link_node = np.random.choice(node_array)
+                if to_link_node not in to_link_list and t != to_link_node:
+                    if (to_link_node, t) not in G.edges and (t, to_link_node) not in G.edges:
+                        G.add_edge(t, to_link_node)
+                        to_link_list.append(to_link_node)
+                        m_flag += 1
+            else:
+                to_link_node = np.random.choice(all_node)
+                if to_link_node not in to_link_list and t != to_link_node:
+                    if (to_link_node, t) not in G.edges and (t, to_link_node) not in G.edges:
+                        G.add_edge(t, to_link_node)
+                        to_link_list.append(to_link_node)
+                        m_flag += 1
+        node_array.extend(to_link_list)
+    return G.to_undirected()
+
+
+def generate_price(n, m, r):
+    g_network = price_model(n, m, r)
+    adj_array = nx.to_numpy_array(g_network)
+    adj_link = []
+    for i in range(adj_array.shape[0]):
+        adj_link.append(np.where(adj_array[i] == 1)[0])
+    g_edge = nx.Graph()
+    for i in range(len(adj_link)):
+        for j in range(len(adj_link[i])):
+            g_edge.add_edge(i, adj_link[i][j])
+    return np.array(adj_link), np.array(g_edge.edges())
 
 
 class SocialStructure():
@@ -46,7 +95,7 @@ def initial_action(f_0, ind_pos, pos_ind):
     return np.array(init_a)
 
 
-def game_one_round(a_l, gamma, ind_pos, pos_ind, g_s, w, mu):
+def game_one_round(a_l, gamma, ind_pos, pos_ind, g_s, w, mu, adj_link):
     ind_n = len(ind_pos)
     pos_n = len(pos_ind)
     a_l_old = np.copy(a_l)
@@ -67,8 +116,12 @@ def game_one_round(a_l, gamma, ind_pos, pos_ind, g_s, w, mu):
         else:
             g_ind = pos_ind[pos]
             ind = random.choice(g_ind)
+            potential_pos = adj_link[pos]
+            potential_pos = np.append(potential_pos, pos)
             while True:
-                oppon = random.choice(range(ind_n))
+                oppon_pos = random.choice(potential_pos)
+                oppon_ind = pos_ind[oppon_pos]
+                oppon = random.choice(oppon_ind)
                 if oppon != ind:
                     break
             ind_p = ind_p_l[ind]
@@ -85,12 +138,13 @@ def run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu):
     f_history = []
     for round in range(init_time):
         a_l = initial_action(f_0, ind_pos, pos_ind)
+        adj_link, edge = generate_price(g_n, 2, r_value)
         for step in range(run_time):
             if round == 0:
                 f_history.append(a_l.mean(axis=1))
             else:
                 f_history[step] = round / (round + 1) * f_history[step] + 1 / (round + 1) * a_l.mean(axis=1)
-            a_l = game_one_round(a_l, gamma, ind_pos, pos_ind, g_s, w, mu)
+            a_l = game_one_round(a_l, gamma, ind_pos, pos_ind, g_s, w, mu, adj_link)
         if round == 0:
             f_history.append(a_l.mean(axis=1))
         else:
@@ -99,20 +153,22 @@ def run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu):
 
 
 if __name__ == '__main__':
-    g_s = 10; g_n = 10; w = 1.0; run_time = 1000; init_time = 500
+    g_s = 5; g_n = 30; w = 1.0; run_time = 1000; init_time = 100
     c = 1.0; mu = 0.01
     # gamma = 0.5; r = gamma * g_s
     ind_pos, pos_ind = build_structure(g_s, g_n)
-    gamma_l = np.round(np.arange(0.1, 2.51, 0.05), 2)
+    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
-    gamma_frac_history = []
-    for gamma in gamma_l:
-        print(gamma)
-        f_0 = [(_ + 0.001) / g_n for _ in range(g_n)]
-        history_sim_r = run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu)
-        gamma_frac_history.extend(history_sim_r)
-    m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
-    gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
-    gamma_frac_history_pd.to_csv('./results/pgg_original_hete.csv')
-    print(gamma_frac_history_pd)
-
+    for r_value in [2, 2.2, 2.5, 3, 5]:
+        print(r_value)
+        gamma_frac_history = []
+        for gamma in gamma_l:
+            print(gamma)
+            f_0 = [(_ + 0.001) / g_n for _ in range(g_n)]
+            history_sim_r = run_game(f_0, init_time, run_time, gamma, ind_pos, pos_ind, g_s, w, mu)
+            gamma_frac_history.extend(history_sim_r)
+        m_index = pd.MultiIndex.from_product([gamma_l, step_l], names=['gamma', 'step'])
+        gamma_frac_history_pd = pd.DataFrame(gamma_frac_history, index=m_index)
+        file_name = './results/pgg_original_price_negative_hete_%.1f.csv' % r_value
+        gamma_frac_history_pd.to_csv(file_name)
+        print(gamma_frac_history_pd)

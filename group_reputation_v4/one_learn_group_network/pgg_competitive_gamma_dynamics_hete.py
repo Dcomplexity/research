@@ -31,12 +31,9 @@ def calc_enhancement_l(m, n, c_dist, r, average=False):
             for i in range(n + 1):
                 r_temp = 0
                 for pos_j in range(m):
-                    mean_j = 0
                     if pos_i != pos_j:
                         for j in range(n + 1):
-                            #mean_j += j * c_dist[pos_j][j]
-                            r_temp += r / edge_num * m * (i/n + 0.001) / (i/n + j/n + 0.001 * 2) * c_dist[pos_j][j]
-                    #r_temp += r / edge_num * m * (i + 0.001) / (i + mean_j + 0.001 * 2)
+                            r_temp += r / edge_num * m * (i + 0.001) / (i + j + 0.001 * 2) * c_dist[pos_j][j]
                 r_l[pos_i][i] = r_temp
     return r_l
 
@@ -94,6 +91,26 @@ def calc_enhancement_w_l(m, n, c_dist, r, w):
     return r_l
 
 
+# def calc_enhancement_w_l(m, n, c_dist, r, w):
+#     r_pos_l = []
+#     r_l = np.zeros((m, n + 1))
+#     edge_num = m * (m - 1) / 2
+#     for pos_i in range(m):
+#         for i in range(n + 1):
+#             r_temp = 0
+#             for pos_j in range(m):
+#                 if pos_i != pos_j:
+#                     for j in range(n + 1):
+#                         r_temp += r / edge_num * m * (i / n + 0.001) / (i / n + j / n + 0.001 * 2) \
+#                                   * (n + 1) * c_dist[pos_j][j] * c_dist[pos_i][i]
+#             r_l[pos_i][i] = r_temp
+#     for pos in range(m):
+#         r_pos_l.append(np.dot(r_l[pos], w[pos]))
+#     r_pos_l = np.array(r_pos_l)
+#     print(np.mean(r_pos_l))
+#     return r_pos_l
+
+
 def calc_payoff(m, n, c, r_l):
     """
     calculate the payoff matrix
@@ -131,7 +148,7 @@ def t_plus(pos_i, c_num, m, n, c_dist, payoff, mu):
             t_plus_p += t_plus_p_j
         else:
             t_plus_p_i = ((n - c_num) / n) * (c_num / n) * (1 / m) \
-                         * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][0] - payoff[pos_i][c_num][1]))))
+                          * (1 / (1 + math.e ** (2.0 * (payoff[pos_i][c_num][0] - payoff[pos_i][c_num][1]))))
             t_plus_p += t_plus_p_i
     t_plus_p = (1 - mu) * t_plus_p + mu * (n - c_num) / n
     return t_plus_p
@@ -209,9 +226,9 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type):
 
 
 if __name__ == '__main__':
-    g_n = 10; g_s = 10; c = 1.0; mu = 0.01; run_time = 1000
-    init_type = 'homo'
-    gamma_l = np.round(np.arange(0.1, 2.51, 0.05), 2)
+    g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 1000
+    init_type = 'hete'
+    gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
     gamma_frac_history = []
     for r in gamma_l:
