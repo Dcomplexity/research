@@ -282,7 +282,7 @@ def dynamic_process(m, n, c, r, mu, run_t, init_type, adj_matrix):
 
 
 if __name__ == '__main__':
-    g_n = 30; g_s = 5; c = 1.0; mu = 0.01; run_time = 2000; init_time = 100
+    g_n = 20; g_s = 5; c = 1.0; mu = 0.01; run_time = 2000; init_time = 100
     init_type = 'negative_hete'
     gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)

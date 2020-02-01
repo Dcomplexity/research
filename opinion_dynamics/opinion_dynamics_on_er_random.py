@@ -85,8 +85,8 @@ if __name__ == '__main__':
     group_length_r = 6
     mul_dimen_r = 10
     degree_r = 20
-    alpha_r = -2
-    beta_r = -2
+    alpha_r = 0
+    beta_r = 0
     total_num_r = group_size_r * (group_base_r ** (group_length_r - 1))
     popu_r = initialize_population(group_size_r, group_base_r, group_length_r, mul_dimen_r, degree_r, alpha_r, beta_r)
     op_history_r = run(popu_r, 0.1, 50)

@@ -57,7 +57,7 @@ def initialize_population(group_size, group_base, group_length, mul_dimen, degre
         #     population.append(Agent(i, i/popu_num + 0.5, adj_link[i]))
         # else:
         #     population.append(Agent(i, i/popu_num - 0.5, adj_link[i]))
-        population.append(Agent(i, random.random(), adj_link[i]))
+        population.append(Agent(i, (i+popu_num/2)%popu_num/popu_num, adj_link[i]))
     return population
 
 
@@ -89,11 +89,11 @@ if __name__ == '__main__':
     group_length_r = 6
     mul_dimen_r = 10
     degree_r = 20
-    alpha_r = -2
-    beta_r = -2
+    alpha_r = 2
+    beta_r = 2
     total_num_r = group_size_r * (group_base_r ** (group_length_r - 1))
     popu_r = initialize_population(group_size_r, group_base_r, group_length_r, mul_dimen_r, degree_r, alpha_r, beta_r)
-    op_history_r = run(popu_r, 0.1, 50)
+    op_history_r = run(popu_r, 0.3, 50)
     op_history_pd = pd.DataFrame(op_history_r)
     plt.figure()
     op_history_pd.T.plot(legend=False)
