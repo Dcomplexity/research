@@ -22,7 +22,9 @@ def evol_proc(qvec, pi_round, beta, n_gen):
     pv1 = np.copy(pi_round)
     # from the perspective of player 2
     pv2 = np.copy(pi_round); pv2[1:3] = pi_round[2:0:-1]; pv2[5:7] = pi_round[6:4:-1]
-    # list of all strategy
+    # list of all strategies. There are four type of strategies.
+    # The first entry of every strategy is the probability to cooperate in state 1
+    # The second entry of every strategy is the probability to cooperate in state 2
     strategy = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
     # Initializing the pairwise payoff matrix and the cooperation matrix
     pay_m = np.zeros((4, 4)); c = np.zeros((4, 4))
@@ -94,6 +96,8 @@ def payoff(p, q, qvec, piv1, piv2):
     """
     eps = 10 ** (-3) # Error rate for implementation errors
     p = p * (1 - eps) + (1 - p) * eps; q = q * (1 - eps) + (1 - q) * eps  # Adding errors to the players strategies
+    # If there are m states and n players who choose between cooperation and defection, then that Markov chain has
+    # m.2**n possible states.
     M = np.array([[(1 - qvec[0][0]) * (1 - p[0]) * (1 - q[0]), (1 - qvec[0][0]) * (1 - p[0]) * q[0],
                    (1 - qvec[0][0]) * p[0] * (1 - q[0]), (1 - qvec[0][0]) * p[0] * q[0],
                    qvec[0][0] * (1 - p[0]) * (1 - q[0]), qvec[0][0] * (1 - p[0]) * q[0],

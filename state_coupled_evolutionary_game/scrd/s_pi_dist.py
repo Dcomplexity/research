@@ -32,7 +32,7 @@ def gen_s_pi_dist(s_l, a_l, pi):
 if __name__ == '__main__':
     # the first dict for player 0 and the second dict for player 1,
     # In the dict, 0 for state 0 and 1 for state 1
-    policy_pi = [{0: [0.9, 0.1], 1: [0.1, 0.9]}, {0: [0.9, 0.1], 1: [0.1, 0.9]}]
+    policy_pi = [{0: [0.5, 0.5], 1: [0.5, 0.5]}, {0: [0.5, 0.5], 1: [0.5, 0.5]}]
     states = [0, 1]
     actions = [0, 1]
     state_dist = gen_s_pi_dist(states, actions, policy_pi)

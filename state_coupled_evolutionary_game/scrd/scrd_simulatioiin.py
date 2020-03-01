@@ -32,7 +32,7 @@ def calc_payoff(agent_id, s, a_l, mixed_s, p_m, pi):
     return p
 
 
-def evolve(strategy, steps):
+def evolve(strategy, step_size):
     s_l = [0, 1]
     a_l = [0, 1]
     s00, s01, s10, s11 = strategy
@@ -43,10 +43,10 @@ def evolve(strategy, steps):
     ds01 = (calc_payoff(0, 1, a_l, [0, 1], p_matrix, pi) - calc_payoff(0, 1, a_l, pi[0][1], p_matrix, pi)) * s01 * s_pi_dist[1]
     ds10 = (calc_payoff(1, 0, a_l, [0, 1], p_matrix, pi) - calc_payoff(1, 0, a_l, pi[1][0], p_matrix, pi)) * s10 * s_pi_dist[0]
     ds11 = (calc_payoff(1, 1, a_l, [0, 1], p_matrix, pi) - calc_payoff(1, 1, a_l, pi[1][1], p_matrix, pi)) * s11 * s_pi_dist[1]
-    s00 = valid_s(s00 + ds00 * steps)
-    s01 = valid_s(s01 + ds01 * steps)
-    s10 = valid_s(s10 + ds10 * steps)
-    s11 = valid_s(s11 + ds11 * steps)
+    s00 = valid_s(s00 + ds00 * step_size)
+    s01 = valid_s(s01 + ds01 * step_size)
+    s10 = valid_s(s10 + ds10 * step_size)
+    s11 = valid_s(s11 + ds11 * step_size)
     return [s00, s01, s10, s11]
 
 

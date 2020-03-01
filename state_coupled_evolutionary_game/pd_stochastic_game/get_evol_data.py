@@ -24,7 +24,7 @@ def get_evol_data():
     freq1 = np.zeros((1, 2 ** 2)).flatten()
     freq2 = np.zeros((1, 2 ** 2)).flatten()
     # Define the transitions of the three scenarios
-    # In each q, there three cases, 2 C (CC), 2 D (CD or DC), 2D (DD)
+    # In each q, there three cases, 0 C (DD), 1 C (CD or DC), 2C (CC)
     qs = np.array([[0.9, 0.9, 0.1], [0.1, 0.1, 0.9]]) # the scenario that transition between state 1 and state 2
     #q1 = np.array([[0, 0, 0], [1, 1, 1]]) # only in the state 1
     #q2 = np.array([[1, 1, 1], [0, 0, 0]]) # only in the state 2
