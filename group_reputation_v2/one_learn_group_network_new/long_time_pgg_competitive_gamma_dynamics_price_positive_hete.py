@@ -31,7 +31,7 @@ def price_model(n, m, r):
                         to_link_list.append(to_link_node)
                         m_flag += 1
             else:
-                to_link_node = np.random.choice(all_node)
+                to_link_node = np.random.choice(t)
                 if to_link_node not in to_link_list and t != to_link_node:
                     if (to_link_node, t) not in G.edges and (t, to_link_node) not in G.edges:
                         G.add_edge(t, to_link_node)
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     init_type = 'positive_hete'
     gamma_l = np.round(np.arange(0.1, 1.51, 0.05), 2)
     step_l = np.arange(run_time + 1)
-    for r_value in [2, 2.2, 2.5, 3, 5]:
+    for r_value in [2, 2.2, 2.5, 3, 5, 7, 10]:
         print(r_value)
         adj_matrix = np.zeros((g_n, g_n))
         for i in range(init_time):
