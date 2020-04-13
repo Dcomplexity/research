@@ -36,9 +36,18 @@ def evol_proc(qvec, pi_round, beta, n_gen):
 
     # Running the evolutionary process
     # Initialize all players use the strategy ALLD
-    res = 0; pop = np.append(np.array([1]), np.zeros((3)))
+    res = random.choice(range(4))
+    pop = np.zeros((1, 4)).flatten()
+    pop_count = np.zeros((1, 4)).flatten()
+    pop[res] = 1
+    pop_count[res] = 1
     # Initialize the output vectors
-    coop = np.zeros((1, n_gen)).flatten(); freq = np.zeros((1, 4)).flatten()
+    # coop = np.zeros((1, n_gen)).flatten()
+    freq = np.zeros((1, 4)).flatten()
+    freq_gen = []
+    pop_gen = []
+    freq_gen.append(pop)
+    pop_gen.append(pop)
     for i in range(n_gen):
         # Introduce mutant strategy
         mut = random.choice(range(4))
@@ -48,11 +57,15 @@ def evol_proc(qvec, pi_round, beta, n_gen):
             res = mut
             pop = np.zeros((1, 4)).flatten()
             pop[res] = 1  # population state is updated
-        coop[i] = c[res, res]  # Storing the cooperation rate at time i
+        # coop[i] = c[res, res]  # Storing the cooperation rate at time i
         # It is equivalent to sum all pop and divide by n_gen
-        print(freq, pop)
+        pop_count[res] += 1
         freq = i / (i + 1) * freq + 1 / (i + 1) * pop # Updating the average frequency
-    return (coop, freq)
+        freq_gen.append(freq)
+        pop_gen.append(pop)
+    pop_count = pop_count / (n_gen + 1)
+    # return (coop, freq)
+    return freq_gen, pop_gen, pop_count
 
 
 def calc_rho(s1, s2, pay_m, n, beta):

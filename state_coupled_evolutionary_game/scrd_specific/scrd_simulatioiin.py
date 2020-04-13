@@ -54,28 +54,30 @@ def evolve(strategy, step_size, transition_matrix):
 if __name__ == '__main__':
     states = [0, 1]
     actions = [0, 1]
-    t = np.arange(0, 1000000)
+    t = np.arange(0, 150000)
     step_length = 0.001
     # transition_matrix = [[0.1, 0.1, 0.1, 0.9], [0.9, 0.9, 0.9, 0.1]]
     # transition_matrix = [[0.9, 0.9, 0.9, 0.1], [0.1, 0.1, 0.1, 0.9]]
     # transition_matrix = [[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]
-    for p_1 in np.arange(0.1, 0.91, 0.1):
-        for p_2 in np.arange(0.1, 0.91, 0.1):
-            print(p_1, p_2)
-            p = [0.5, 0.5, 0.5, 0.5]
-            transition_matrix = [[p_1, p_1, p_1, p_2], [p_2, p_2, p_2, p_1]]
-            d = []
-            d.append(p)
-            for _ in t:
-                # if _ % 1000 == 0:
-                #     print(_)
-                p = evolve(p, step_length, transition_matrix)
-                # if _ % 1000 == 0:
-                #     print(p)
-                d.append(p)
-            abs_path = os.path.abspath(os.path.join(os.getcwd(), "./results"))
-            csv_file_name = "/p1_%.1f_p2_%.1f_strategy_trace.csv" % (p_1, p_2)
-            file_name = abs_path + csv_file_name
-            d_pd = pd.DataFrame(d)
-            d_pd.to_csv(file_name, index=None)
-            # print(d_pd)
+    p_1 = 0.5
+    p_2 = 0.5
+    print(p_1, p_2)
+
+    p = [0.6, 0.7, 0.3, 0.4]
+    transition_matrix = [[p_1, p_1, p_1, p_2], [p_2, p_2, p_2, p_1]]
+    d = []
+    d.append(p)
+    for _ in t:
+        # if _ % 1000 == 0:
+        #     print(_)
+        print(_, p)
+        p = evolve(p, step_length, transition_matrix)
+        # if _ % 1000 == 0:
+        #     print(p)
+        d.append(p)
+    abs_path = os.path.abspath(os.path.join(os.getcwd(), "./results"))
+    csv_file_name = "/p1_%.1f_p2_%.1f_strategy_trace.csv" % (p_1, p_2)
+    file_name = abs_path + csv_file_name
+    d_pd = pd.DataFrame(d)
+    d_pd.to_csv(file_name, index=None)
+    # print(d_pd)

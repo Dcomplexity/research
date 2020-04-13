@@ -78,9 +78,9 @@ def run(pi, transition_matrix):
 if __name__ == "__main__":
     # the first dict for player 0 and the second dict for player 1,
     # In the dict, 0 for state 0 and 1 for state 1
-    # policy_pi = [{0: [0.3, 0.7], 1: [0.3, 0.7]}, {0: [0.8, 0.2], 1: [0.8, 0.2]}]
+    policy_pi = [{0: [0.4, 0.6], 1: [0.993, 0.007]}, {0: [0.4, 0.6], 1: [0.993, 0.07]}]
     # policy_pi = [{0: [1.0, 0.0], 1: [1.0, 0.0]}, {0: [1.0, 0.0], 1: [1.0, 0.0]}]
-    policy_pi = [{0: [0.0, 1.0], 1: [0.0, 1.0]}, {0: [0.0, 1.0], 1: [0.0, 1.0]}]
+    # policy_pi = [{0: [0.0, 1.0], 1: [0.0, 1.0]}, {0: [0.0, 1.0], 1: [0.0, 1.0]}]
     # policy_pi = [{0: [0.1, 0.9], 1: [0.1, 0.9]}, {0: [0.1, 0.9], 1: [0.1, 0.9]}]
     transition_matrix = [[0.1, 0.1, 0.1, 0.9], [0.9, 0.9, 0.9, 0.1]]
     state_dist, payoff_matrix = run(policy_pi, transition_matrix)
